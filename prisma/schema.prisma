@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  password        String
+  name            String
+  role            String           @default("RESTAURANT_USER")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  restaurantUsers RestaurantUser[]
+}
+
+model Restaurant {
+  id               String           @id @default(cuid())
+  slug             String           @unique
+  name             String
+  logo             String?
+  primaryColor     String           @default("#FF6B35")
+  defaultLanguage  String           @default("he")
+  isActive         Boolean          @default(true)
+  subscriptionPlan String           @default("BASIC")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  users            RestaurantUser[]
+  tables           Table[]
+  categories       Category[]
+  products         Product[]
+  orders           Order[]
+}
+
+model RestaurantUser {
+  id           String     @id @default(cuid())
+  userId       String
+  restaurantId String
+  role         String     @default("STAFF")
+  user         User       @relation(fields: [userId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, restaurantId])
+}
+
+model Table {
+  id           String     @id @default(cuid())
+  restaurantId String
+  name         String
+  isActive     Boolean    @default(true)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  orders       Order[]
+  createdAt    DateTime   @default(now())
+}
+
+model Category {
+  id           String     @id @default(cuid())
+  restaurantId String
+  nameHe       String
+  nameEn       String?
+  nameRu       String?
+  image        String?
+  position     Int        @default(0)
+  isActive     Boolean    @default(true)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  products     Product[]
+  createdAt    DateTime   @default(now())
+}
+
+model Product {
+  id           String          @id @default(cuid())
+  restaurantId String
+  categoryId   String
+  nameHe       String
+  nameEn       String?
+  nameRu       String?
+  descHe       String?
+  descEn       String?
+  descRu       String?
+  price        Float
+  image        String?
+  isAvailable  Boolean         @default(true)
+  position     Int             @default(0)
+  restaurant   Restaurant      @relation(fields: [restaurantId], references: [id])
+  category     Category        @relation(fields: [categoryId], references: [id])
+  options      ProductOption[]
+  orderItems   OrderItem[]
+  createdAt    DateTime        @default(now())
+}
+
+model ProductOption {
+  id        String   @id @default(cuid())
+  productId String
+  nameHe    String
+  nameEn    String?
+  nameRu    String?
+  price     Float    @default(0)
+  type      String   @default("EXTRA")
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  restaurantId  String
+  tableId       String
+  orderNumber   Int
+  status        String      @default("NEW")
+  paymentMethod String      @default("ON_SITE")
+  totalAmount   Float
+  customerNote  String?
+  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id])
+  table         Table       @relation(fields: [tableId], references: [id])
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
+  productId       String
+  productName     String
+  quantity        Int
+  unitPrice       Float
+  selectedOptions Json?
+  subtotal        Float
+  order           Order    @relation(fields: [orderId], references: [id])
+  product         Product  @relation(fields: [productId], references: [id])
+  createdAt       DateTime @default(now())
+}
