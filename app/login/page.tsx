@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Logo from '../components/Logo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -35,6 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <Logo size={48} textClassName="text-2xl text-white" className="justify-center mb-4" />
           <h1 className="text-3xl font-bold text-white mb-2">ברוך הבא</h1>
           <p className="text-gray-400">התחבר לניהול המסעדה שלך</p>
         </div>

@@ -12,7 +12,7 @@ export async function GET() {
       orderBy: { createdAt: 'asc' },
     })
 
-    return Response.json(tables)
+    return Response.json({ tables, restaurantSlug: session.restaurantSlug as string | null })
   } catch (error) {
     return Response.json({ error: 'Server error' }, { status: 500 })
   }

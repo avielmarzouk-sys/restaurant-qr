@@ -5,6 +5,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 
 export default function TablesPage() {
   const [tables, setTables] = useState<any[]>([])
+  const [restaurantSlug, setRestaurantSlug] = useState('')
   const [newTableName, setNewTableName] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -13,7 +14,8 @@ export default function TablesPage() {
   const fetchTables = async () => {
     const res = await fetch('/api/tables')
     const data = await res.json()
-    setTables(Array.isArray(data) ? data : [])
+    setTables(Array.isArray(data.tables) ? data.tables : [])
+    setRestaurantSlug(data.restaurantSlug || '')
   }
 
   useEffect(() => { fetchTables() }, [])
@@ -103,7 +105,7 @@ export default function TablesPage() {
               <button
                 onClick={() => setSelectedQR({
                   name: table.name,
-                  url: `${window.location.origin}/menu/my-restaurant/${table.id}`
+                  url: `${window.location.origin}/menu/${restaurantSlug}/${table.id}`
                 })}
                 className="w-full bg-gray-800 text-white py-2 rounded-xl text-sm"
               >

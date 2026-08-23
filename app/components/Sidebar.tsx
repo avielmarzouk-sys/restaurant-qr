@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Logo from './Logo'
 
 const menuItems = [
   { href: '/dashboard', icon: '📊', label: 'לוח בקרה' },
@@ -11,16 +12,20 @@ const menuItems = [
   { href: '/dashboard/stats', icon: '📈', label: 'סטטיסטיקות' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ role }: { role?: string }) {
   const pathname = usePathname()
+
+  const items = role === 'SUPERADMIN'
+    ? [...menuItems, { href: '/dashboard/restaurants', icon: '🏢', label: 'מסעדות' }]
+    : menuItems
 
   return (
     <div className="w-64 min-h-screen bg-gray-900 border-l border-gray-800 p-4" dir="rtl">
       <div className="mb-8">
-        <h1 className="text-xl font-bold text-orange-500">🍽️ MenuQR</h1>
+        <Logo size={32} textClassName="text-xl text-white" />
       </div>
       <nav className="space-y-1">
-        {menuItems.map((item) => (
+        {items.map((item) => (
           <Link
             key={item.href}
             href={item.href}

@@ -15,7 +15,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-row-reverse">
-      <Sidebar />
+      <Sidebar role={session.role as string} />
       <div className="flex-1 flex flex-col">
         <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
           <div className="flex items-center justify-between">

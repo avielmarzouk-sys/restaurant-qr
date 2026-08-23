@@ -21,6 +21,7 @@ export default function MenuClientPage() {
   const [customerNote, setCustomerNote] = useState('')
   const [lang, setLang] = useState<'he' | 'en' | 'fr'>('he')
   const [sending, setSending] = useState(false)
+  const [orderError, setOrderError] = useState('')
   const [orderId, setOrderId] = useState<string | null>(null)
   const [orderStatus, setOrderStatus] = useState<string>('NEW')
 
@@ -32,14 +33,22 @@ export default function MenuClientPage() {
         if (data.categories?.length > 0) setSelectedCategory(data.categories[0].id)
         setLoading(false)
       })
+      .catch(() => {
+        setRestaurant({ error: true })
+        setLoading(false)
+      })
   }, [restaurantSlug])
 
   useEffect(() => {
     if (!orderId || !showSuccess) return
     const interval = setInterval(async () => {
-      const res = await fetch(`/api/orders/status?orderId=${orderId}`)
-      const data = await res.json()
-      if (data.status) setOrderStatus(data.status)
+      try {
+        const res = await fetch(`/api/orders/status?orderId=${orderId}`)
+        const data = await res.json()
+        if (data.status) setOrderStatus(data.status)
+      } catch {
+        // network hiccup, will retry on the next tick
+      }
     }, 3000)
     return () => clearInterval(interval)
   }, [orderId, showSuccess])
@@ -86,28 +95,38 @@ export default function MenuClientPage() {
   const placeOrder = async () => {
     if (cart.length === 0) return
     setSending(true)
-    const res = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ restaurantId: restaurant.id, tableId, items: cart, totalAmount, customerNote }),
-    })
-    const data = await res.json()
-    if (data.orderNumber) {
+    setOrderError('')
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: restaurant.id, tableId, items: cart, totalAmount, customerNote }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.orderNumber) {
+        throw new Error(data?.error || 'Order failed')
+      }
       setOrderNumber(data.orderNumber)
       setOrderId(data.id)
       setOrderStatus('NEW')
-      setSending(false)
       setShowSuccess(true)
       setCart([])
       setShowCart(false)
       setCustomerNote('')
+    } catch (err) {
+      setOrderError(
+        lang === 'he' ? 'שליחת ההזמנה נכשלה, נסה שוב' :
+        lang === 'fr' ? "Échec de l'envoi de la commande, réessayez" :
+        'Failed to send the order, please try again'
+      )
+    } finally {
+      setSending(false)
     }
   }
 
   if (loading) return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
       <div className="w-12 h-12 border-4 border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-yellow-600 font-light tracking-widest text-sm">PRIMO</p>
     </div>
   )
 
@@ -170,7 +189,7 @@ export default function MenuClientPage() {
           </div>
         </div>
 
-        <p className="text-yellow-600 tracking-widest text-xs mb-3 slide-up-1">PRIMO STEAKHOUSE</p>
+        <p className="text-yellow-600 tracking-widest text-xs mb-3 slide-up-1">{restaurant.name}</p>
         <h2 className="text-2xl font-bold text-white mb-2 slide-up-1">
           {lang === 'he' ? 'ההזמנה בדרך!' : lang === 'fr' ? 'Commande envoyée !' : 'Order on its way!'}
         </h2>
@@ -242,9 +261,8 @@ export default function MenuClientPage() {
         <svg viewBox="0 0 400 400" className="w-96 h-96" fill="none">
           <circle cx="200" cy="200" r="190" stroke="#B8860B" strokeWidth="2"/>
           <circle cx="200" cy="200" r="170" stroke="#B8860B" strokeWidth="1"/>
-          <text x="200" y="180" textAnchor="middle" fill="#B8860B" fontSize="80" fontFamily="Georgia, serif" fontWeight="bold">P</text>
-          <text x="200" y="240" textAnchor="middle" fill="#B8860B" fontSize="22" fontFamily="Georgia, serif" letterSpacing="12">PRIMO</text>
-          <text x="200" y="270" textAnchor="middle" fill="#B8860B" fontSize="11" fontFamily="Georgia, serif" letterSpacing="8">STEAKHOUSE</text>
+          <text x="200" y="180" textAnchor="middle" fill="#B8860B" fontSize="80" fontFamily="Georgia, serif" fontWeight="bold">{restaurant.name?.charAt(0)}</text>
+          <text x="200" y="240" textAnchor="middle" fill="#B8860B" fontSize="22" fontFamily="Georgia, serif" letterSpacing="12">{restaurant.name?.toUpperCase()}</text>
           <line x1="80" y1="290" x2="320" y2="290" stroke="#B8860B" strokeWidth="1"/>
         </svg>
       </div>
@@ -252,8 +270,7 @@ export default function MenuClientPage() {
       <div className="bg-black border-b border-yellow-900/30 px-6 py-5 relative z-10">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-yellow-600 tracking-widest text-xs mb-1">STEAKHOUSE</p>
-            <h1 className="text-2xl font-bold tracking-wide">פרימו</h1>
+            <h1 className="text-2xl font-bold tracking-wide">{restaurant.name}</h1>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex gap-1">
@@ -316,6 +333,13 @@ export default function MenuClientPage() {
             </div>
           </div>
         ))}
+
+        <div className="flex items-center justify-center gap-1.5 pt-4 pb-1 opacity-50">
+          <img src="/logo.svg" alt="Click2Eat" className="w-4 h-4" />
+          <span className="text-[11px] tracking-widest text-gray-400">
+            {lang === 'he' ? 'מופעל על ידי Click2Eat' : lang === 'fr' ? 'Propulsé par Click2Eat' : 'Powered by Click2Eat'}
+          </span>
+        </div>
       </div>
 
       {cart.length > 0 && (
@@ -462,6 +486,11 @@ export default function MenuClientPage() {
                 <span className="tracking-widest text-sm text-gray-400">{lang === 'he' ? 'סה"כ' : 'TOTAL'}</span>
                 <span className="text-yellow-600 font-bold text-2xl">{totalAmount}₪</span>
               </div>
+              {orderError && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm text-center mb-4">
+                  {orderError}
+                </div>
+              )}
               <button onClick={placeOrder} className="w-full bg-yellow-600 text-black py-4 font-bold tracking-widest text-sm rounded-xl">
                 {lang === 'he' ? 'שלח הזמנה' : lang === 'fr' ? 'ENVOYER LA COMMANDE' : 'PLACE ORDER'}
               </button>

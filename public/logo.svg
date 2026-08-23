@@ -1,0 +1,27 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="c2eBg" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF9457"/>
+      <stop offset="1" stop-color="#FF5A2B"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="24" fill="url(#c2eBg)"/>
+  <circle cx="44" cy="47" r="26" fill="#FFF7EE"/>
+  <!-- fork -->
+  <g transform="translate(35,47) rotate(-16)">
+    <rect x="-4.6" y="-13" width="1.8" height="13" rx="0.9" fill="#E1521F"/>
+    <rect x="-1.4" y="-13" width="1.8" height="13" rx="0.9" fill="#E1521F"/>
+    <rect x="1.8" y="-13" width="1.8" height="13" rx="0.9" fill="#E1521F"/>
+    <rect x="-4.9" y="-1" width="9" height="3.4" rx="1.6" fill="#E1521F"/>
+    <rect x="-1.6" y="1.6" width="3.2" height="16" rx="1.6" fill="#E1521F"/>
+  </g>
+  <!-- knife -->
+  <g transform="translate(55,47) rotate(16)">
+    <polygon points="-2.4,-17 3.2,-13 2.6,1.4 -2.4,1.4" fill="#E1521F"/>
+    <rect x="-1.7" y="1.4" width="3.2" height="16" rx="1.6" fill="#E1521F"/>
+  </g>
+  <!-- click badge -->
+  <circle cx="79" cy="80" r="18" fill="#20242C"/>
+  <circle cx="79" cy="80" r="18" fill="none" stroke="#FFF7EE" stroke-width="3"/>
+  <path d="M72 71 L72 91 L76.2 87.3 L79.3 93.5 L82.6 91.9 L79.5 85.6 L85 85 Z" fill="#FFF7EE"/>
+</svg>
