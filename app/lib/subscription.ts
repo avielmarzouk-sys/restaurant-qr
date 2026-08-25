@@ -1,0 +1,1 @@
+export const SUBSCRIPTION_PRICE = 500 // ₪ par mois, par מסעדה פעילה

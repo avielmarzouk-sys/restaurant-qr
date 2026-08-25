@@ -69,3 +69,31 @@ export async function DELETE(
     return Response.json({ error: 'Server error' }, { status: 500 })
   }
 }
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session || session.role !== 'SUPERADMIN') {
+      return Response.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const { id } = await params
+    const { isActive } = await req.json()
+
+    if (typeof isActive !== 'boolean') {
+      return Response.json({ error: 'Paramètre isActive manquant' }, { status: 400 })
+    }
+
+    const restaurant = await prisma.restaurant.update({
+      where: { id },
+      data: { isActive },
+    })
+
+    return Response.json(restaurant)
+  } catch (error) {
+    console.error(error)
+    return Response.json({ error: 'Server error' }, { status: 500 })
+  }
+}

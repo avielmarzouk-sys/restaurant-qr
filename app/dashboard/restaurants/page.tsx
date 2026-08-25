@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { SUBSCRIPTION_PRICE } from '@/app/lib/subscription'
 
 export default function RestaurantsPage() {
   const [restaurants, setRestaurants] = useState<any[]>([])
@@ -13,6 +14,7 @@ export default function RestaurantsPage() {
   const [form, setForm] = useState({ name: '', ownerName: '', ownerEmail: '', ownerPassword: '', primaryColor: '#FF6B35' })
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const fetchRestaurants = async () => {
     setLoadError('')
@@ -68,6 +70,19 @@ export default function RestaurantsPage() {
     const res = await fetch(`/api/admin/restaurants/${id}`, { method: 'DELETE' })
     setDeletingId(null)
     setConfirmingId(null)
+    if (res.ok) {
+      fetchRestaurants()
+    }
+  }
+
+  const toggleActive = async (id: string, currentActive: boolean) => {
+    setTogglingId(id)
+    const res = await fetch(`/api/admin/restaurants/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: !currentActive }),
+    })
+    setTogglingId(null)
     if (res.ok) {
       fetchRestaurants()
     }
@@ -161,21 +176,39 @@ export default function RestaurantsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {restaurants.map((r: any) => (
-            <div key={r.id} className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+            <div key={r.id} className={`bg-gray-900 rounded-2xl p-6 border ${r.isActive ? 'border-gray-800' : 'border-red-900/50'}`}>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-bold text-lg">{r.name}</h3>
                 <span className="w-5 h-5 rounded-full border border-gray-700" style={{ backgroundColor: r.primaryColor }}></span>
               </div>
               <p className="text-gray-500 text-sm mb-1">/{r.slug}</p>
               <p className="text-gray-500 text-xs">{r.users?.[0]?.user?.email}</p>
-              <p className={`text-xs mt-2 ${r.isActive ? 'text-green-500' : 'text-red-400'}`}>
-                {r.isActive ? '● פעיל' : '● לא פעיל'}
-              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <p className={`text-xs ${r.isActive ? 'text-green-500' : 'text-red-400'}`}>
+                  {r.isActive ? '● פעיל' : '● מושהה'}
+                </p>
+                <span className="text-gray-600">•</span>
+                <p className="text-xs text-gray-400">
+                  מנוי: {r.isActive ? `${SUBSCRIPTION_PRICE}₪/חודש` : 'לא בתשלום'}
+                </p>
+              </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-800">
+              <div className="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between gap-3">
+                <button
+                  onClick={() => toggleActive(r.id, r.isActive)}
+                  disabled={togglingId === r.id}
+                  className={`text-xs px-3 py-1.5 rounded-lg disabled:opacity-50 ${
+                    r.isActive
+                      ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700'
+                      : 'bg-green-600 text-white hover:bg-green-500'
+                  }`}
+                >
+                  {togglingId === r.id ? '...' : r.isActive ? '⏸ השהה מנוי' : '▶ הפעל מחדש'}
+                </button>
+
                 {confirmingId === r.id ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-red-400 text-xs flex-1">למחוק לצמיתות את כל הנתונים?</span>
+                    <span className="text-red-400 text-xs">למחוק לצמיתות?</span>
                     <button
                       onClick={() => deleteRestaurant(r.id)}
                       disabled={deletingId === r.id}
@@ -195,7 +228,7 @@ export default function RestaurantsPage() {
                     onClick={() => setConfirmingId(r.id)}
                     className="text-red-400 text-xs hover:text-red-300 transition-all"
                   >
-                    🗑 מחק מסעדה
+                    🗑 מחק
                   </button>
                 )}
               </div>
