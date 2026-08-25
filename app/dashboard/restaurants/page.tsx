@@ -10,6 +10,8 @@ export default function RestaurantsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({ name: '', ownerName: '', ownerEmail: '', ownerPassword: '', primaryColor: '#FF6B35' })
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const fetchRestaurants = async () => {
     const res = await fetch('/api/admin/restaurants')
@@ -46,6 +48,16 @@ export default function RestaurantsPage() {
     setForm({ name: '', ownerName: '', ownerEmail: '', ownerPassword: '', primaryColor: '#FF6B35' })
     setShowAdd(false)
     fetchRestaurants()
+  }
+
+  const deleteRestaurant = async (id: string) => {
+    setDeletingId(id)
+    const res = await fetch(`/api/admin/restaurants/${id}`, { method: 'DELETE' })
+    setDeletingId(null)
+    setConfirmingId(null)
+    if (res.ok) {
+      fetchRestaurants()
+    }
   }
 
   if (loading) return <div dir="rtl" className="text-gray-400">טוען...</div>
@@ -140,6 +152,34 @@ export default function RestaurantsPage() {
               <p className={`text-xs mt-2 ${r.isActive ? 'text-green-500' : 'text-red-400'}`}>
                 {r.isActive ? '● פעיל' : '● לא פעיל'}
               </p>
+
+              <div className="mt-4 pt-4 border-t border-gray-800">
+                {confirmingId === r.id ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-400 text-xs flex-1">למחוק לצמיתות את כל הנתונים?</span>
+                    <button
+                      onClick={() => deleteRestaurant(r.id)}
+                      disabled={deletingId === r.id}
+                      className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg disabled:opacity-50"
+                    >
+                      {deletingId === r.id ? '...' : 'כן, מחק'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmingId(null)}
+                      className="bg-gray-700 text-white text-xs px-3 py-1.5 rounded-lg"
+                    >
+                      ביטול
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmingId(r.id)}
+                    className="text-red-400 text-xs hover:text-red-300 transition-all"
+                  >
+                    🗑 מחק מסעדה
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

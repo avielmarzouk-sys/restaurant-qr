@@ -48,7 +48,6 @@ export async function DELETE(
       prisma.restaurant.delete({ where: { id } }),
     ])
 
-    // Supprime aussi le compte du propriétaire s'il n'est lié à aucun autre restaurant
     if (userIds.length > 0) {
       const stillLinked = await prisma.restaurantUser.findMany({
         where: { userId: { in: userIds } },
