@@ -9,20 +9,33 @@ export default function RestaurantsPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
   const [form, setForm] = useState({ name: '', ownerName: '', ownerEmail: '', ownerPassword: '', primaryColor: '#FF6B35' })
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const fetchRestaurants = async () => {
-    const res = await fetch('/api/admin/restaurants')
-    if (res.status === 403) {
-      setForbidden(true)
+    setLoadError('')
+    try {
+      const res = await fetch('/api/admin/restaurants')
+      if (res.status === 403) {
+        setForbidden(true)
+        setLoading(false)
+        return
+      }
+      const data = await res.json()
+      if (!res.ok) {
+        setLoadError(typeof data?.error === 'string' ? data.error : `Erreur serveur (${res.status})`)
+        setLoading(false)
+        return
+      }
+      setRestaurants(Array.isArray(data) ? data : [])
       setLoading(false)
-      return
+    } catch (err) {
+      console.error(err)
+      setLoadError('Impossible de contacter le serveur. Regarde la console du navigateur (F12) pour le détail.')
+      setLoading(false)
     }
-    const data = await res.json()
-    setRestaurants(Array.isArray(data) ? data : [])
-    setLoading(false)
   }
 
   useEffect(() => { fetchRestaurants() }, [])
@@ -79,6 +92,12 @@ export default function RestaurantsPage() {
           + מסעדה חדשה
         </button>
       </div>
+
+      {loadError && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-sm mb-6 text-center">
+          {loadError}
+        </div>
+      )}
 
       {showAdd && (
         <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 mb-6 space-y-4">
