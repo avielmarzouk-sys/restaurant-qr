@@ -15,6 +15,8 @@ export default function RestaurantsPage() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name-asc' | 'name-desc'>('newest')
 
   const fetchRestaurants = async () => {
     setLoadError('')
@@ -87,6 +89,15 @@ export default function RestaurantsPage() {
       fetchRestaurants()
     }
   }
+
+  const displayedRestaurants = restaurants
+    .filter((r) => (r.name || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'name-asc') return (a.name || '').localeCompare(b.name || '')
+      if (sortBy === 'name-desc') return (b.name || '').localeCompare(a.name || '')
+      if (sortBy === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
 
   if (loading) return <div dir="rtl" className="text-gray-400">טוען...</div>
 
@@ -168,14 +179,41 @@ export default function RestaurantsPage() {
         </div>
       )}
 
+      {restaurants.length > 0 && (
+        <div className="flex flex-col md:flex-row gap-3 mb-6">
+          <input
+            type="text"
+            placeholder="🔍 חיפוש לפי שם מסעדה..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-gray-900 border border-gray-800 text-white rounded-xl px-4 py-2 outline-none focus:border-orange-500/50"
+          />
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="bg-gray-900 border border-gray-800 text-white rounded-xl px-4 py-2 outline-none"
+          >
+            <option value="newest">החדשים ביותר</option>
+            <option value="oldest">הישנים ביותר</option>
+            <option value="name-asc">לפי שם (א-ת)</option>
+            <option value="name-desc">לפי שם (ת-א)</option>
+          </select>
+        </div>
+      )}
+
       {restaurants.length === 0 ? (
         <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800 text-center text-gray-500">
           <p className="text-4xl mb-3">🏢</p>
           <p>אין מסעדות עדיין</p>
         </div>
+      ) : displayedRestaurants.length === 0 ? (
+        <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800 text-center text-gray-500">
+          <p className="text-4xl mb-3">🔍</p>
+          <p>לא נמצאו מסעדות תואמות לחיפוש</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {restaurants.map((r: any) => (
+          {displayedRestaurants.map((r: any) => (
             <div key={r.id} className={`bg-gray-900 rounded-2xl p-6 border ${r.isActive ? 'border-gray-800' : 'border-red-900/50'}`}>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-bold text-lg">{r.name}</h3>
