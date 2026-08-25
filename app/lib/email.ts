@@ -2,9 +2,6 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-// Tant qu'aucun domaine n'est vérifié sur Resend, cette adresse de test
-// ne peut envoyer qu'à l'adresse avec laquelle tu t'es inscrit sur Resend.
-// Une fois un domaine vérifié, remplace par ex. par 'Click2Eat <bonjour@tondomaine.com>'
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Click2Eat <onboarding@resend.dev>'
 
 export async function sendWelcomeEmail({
@@ -21,7 +18,7 @@ export async function sendWelcomeEmail({
   const loginUrl = `${process.env.NEXTAUTH_URL || 'https://click2eat.vercel.app'}/login`
 
   try {
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,
       subject: `Bienvenue sur Click2Eat, ${restaurantName} !`,
@@ -53,8 +50,14 @@ export async function sendWelcomeEmail({
       </div>
       `,
     })
+
+    if (error) {
+      console.error('RESEND a refusé l\'envoi du mail de bienvenue:', error)
+      return
+    }
+
+    console.log('Email de bienvenue envoyé avec succès, id Resend:', data?.id)
   } catch (error) {
-    console.error('Failed to send welcome email:', error)
-    // On ne bloque jamais la création du restaurant si l'envoi de l'email échoue
+    console.error('Erreur inattendue lors de l\'envoi du mail de bienvenue:', error)
   }
 }
