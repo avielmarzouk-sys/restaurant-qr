@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Logo from './Logo'
 
-const menuItems = [
+const restaurantMenuItems = [
   { href: '/dashboard', icon: '📊', label: 'לוח בקרה' },
   { href: '/dashboard/orders', icon: '🧾', label: 'הזמנות' },
   { href: '/dashboard/menu', icon: '🍔', label: 'תפריט' },
@@ -12,12 +12,15 @@ const menuItems = [
   { href: '/dashboard/stats', icon: '📈', label: 'סטטיסטיקות' },
 ]
 
+const superAdminMenuItems = [
+  { href: '/dashboard', icon: '🌐', label: 'סקירה כללית' },
+  { href: '/dashboard/restaurants', icon: '🏢', label: 'מסעדות' },
+]
+
 export default function Sidebar({ role }: { role?: string }) {
   const pathname = usePathname()
 
-  const items = role === 'SUPERADMIN'
-    ? [...menuItems, { href: '/dashboard/restaurants', icon: '🏢', label: 'מסעדות' }]
-    : menuItems
+  const items = role === 'SUPERADMIN' ? superAdminMenuItems : restaurantMenuItems
 
   return (
     <div className="w-64 min-h-screen bg-gray-900 border-l border-gray-800 p-4" dir="rtl">
