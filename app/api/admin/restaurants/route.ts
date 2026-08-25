@@ -1,70 +1,92 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 import { getSession } from '@/app/lib/auth'
+import { sendWelcomeEmail } from '@/app/lib/email'
+import bcrypt from 'bcryptjs'
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+function slugify(name: string) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'restaurant'
+}
+
+export async function GET() {
   try {
     const session = await getSession()
     if (!session || session.role !== 'SUPERADMIN') {
       return Response.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const { id } = await params
+    const restaurants = await prisma.restaurant.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { users: { include: { user: true } } },
+    })
 
-    const restaurant = await prisma.restaurant.findUnique({ where: { id } })
-    if (!restaurant) {
-      return Response.json({ error: 'Restaurant introuvable' }, { status: 404 })
+    return Response.json(restaurants)
+  } catch (error) {
+    console.error(error)
+    return Response.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session || session.role !== 'SUPERADMIN') {
+      return Response.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const restaurantUsers = await prisma.restaurantUser.findMany({
-      where: { restaurantId: id },
-      select: { userId: true },
-    })
-    const userIds = restaurantUsers.map((ru) => ru.userId)
+    const { name, ownerEmail, ownerPassword, ownerName, primaryColor } = await req.json()
 
-    const orders = await prisma.order.findMany({
-      where: { restaurantId: id },
-      select: { id: true },
-    })
-    const orderIds = orders.map((o) => o.id)
-
-    const products = await prisma.product.findMany({
-      where: { restaurantId: id },
-      select: { id: true },
-    })
-    const productIds = products.map((p) => p.id)
-
-    await prisma.$transaction([
-      prisma.orderItem.deleteMany({ where: { orderId: { in: orderIds } } }),
-      prisma.productOption.deleteMany({ where: { productId: { in: productIds } } }),
-      prisma.order.deleteMany({ where: { restaurantId: id } }),
-      prisma.product.deleteMany({ where: { restaurantId: id } }),
-      prisma.category.deleteMany({ where: { restaurantId: id } }),
-      prisma.table.deleteMany({ where: { restaurantId: id } }),
-      prisma.restaurantUser.deleteMany({ where: { restaurantId: id } }),
-      prisma.restaurant.delete({ where: { id } }),
-    ])
-
-    // Supprime aussi le compte du propriétaire s'il n'est lié à aucun autre restaurant
-    if (userIds.length > 0) {
-      const stillLinked = await prisma.restaurantUser.findMany({
-        where: { userId: { in: userIds } },
-        select: { userId: true },
-      })
-      const stillLinkedIds = new Set(stillLinked.map((r) => r.userId))
-      const orphanUserIds = userIds.filter((uid) => !stillLinkedIds.has(uid))
-
-      if (orphanUserIds.length > 0) {
-        await prisma.user.deleteMany({
-          where: { id: { in: orphanUserIds }, role: { not: 'SUPERADMIN' } },
-        })
-      }
+    if (!name || !ownerEmail || !ownerPassword) {
+      return Response.json({ error: 'Champs manquants' }, { status: 400 })
     }
 
-    return Response.json({ success: true })
+    let slug = slugify(name)
+    const existing = await prisma.restaurant.findUnique({ where: { slug } })
+    if (existing) {
+      slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email: ownerEmail } })
+    if (existingUser) {
+      return Response.json({ error: 'Cet email est déjà utilisé' }, { status: 400 })
+    }
+
+    const hashedPassword = await bcrypt.hash(ownerPassword, 10)
+
+    const restaurant = await prisma.restaurant.create({
+      data: {
+        name,
+        slug,
+        primaryColor: primaryColor || '#FF6B35',
+        users: {
+          create: {
+            role: 'OWNER',
+            user: {
+              create: {
+                email: ownerEmail,
+                password: hashedPassword,
+                name: ownerName || name,
+                role: 'RESTAURANT_USER',
+              },
+            },
+          },
+        },
+      },
+    })
+
+    await sendWelcomeEmail({
+      to: ownerEmail,
+      ownerName: ownerName || name,
+      restaurantName: name,
+      tempPassword: ownerPassword,
+    })
+
+    return Response.json(restaurant)
   } catch (error) {
     console.error(error)
     return Response.json({ error: 'Server error' }, { status: 500 })
