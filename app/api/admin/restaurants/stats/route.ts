@@ -8,31 +8,10 @@ export async function GET() {
       return Response.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    const [
-      totalRestaurants,
-      activeRestaurants,
-      todayOrders,
-      todayRevenueData,
-      recentRestaurants,
-    ] = await Promise.all([
+    const [totalRestaurants, activeRestaurants, recentRestaurants] = await Promise.all([
       prisma.restaurant.count(),
 
       prisma.restaurant.count({ where: { isActive: true } }),
-
-      prisma.order.count({
-        where: { createdAt: { gte: today } },
-      }),
-
-      prisma.order.aggregate({
-        where: {
-          createdAt: { gte: today },
-          status: { not: 'CANCELLED' },
-        },
-        _sum: { totalAmount: true },
-      }),
 
       prisma.restaurant.findMany({
         orderBy: { createdAt: 'desc' },
@@ -43,8 +22,6 @@ export async function GET() {
     return Response.json({
       totalRestaurants,
       activeRestaurants,
-      todayOrders,
-      todayRevenue: Math.round(todayRevenueData._sum.totalAmount || 0),
       recentRestaurants,
     })
   } catch (error) {
