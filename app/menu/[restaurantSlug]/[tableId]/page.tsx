@@ -335,7 +335,7 @@ export default function MenuClientPage() {
         ))}
 
         <div className="flex items-center justify-center gap-1.5 pt-4 pb-1 opacity-50">
-          <img src="/logo.svg" alt="Click2Eat" className="w-4 h-4" />
+          <img src="/logo.png" alt="Click2Eat" className="w-4 h-4 rounded" />
           <span className="text-[11px] tracking-widest text-gray-400">
             {lang === 'he' ? 'מופעל על ידי Click2Eat' : lang === 'fr' ? 'Propulsé par Click2Eat' : 'Powered by Click2Eat'}
           </span>
