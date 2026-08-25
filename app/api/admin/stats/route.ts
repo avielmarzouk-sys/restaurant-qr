@@ -1,5 +1,6 @@
 import { prisma } from '@/app/lib/prisma'
 import { getSession } from '@/app/lib/auth'
+import { SUBSCRIPTION_PRICE } from '@/app/lib/subscription'
 
 export async function GET() {
   try {
@@ -22,6 +23,7 @@ export async function GET() {
     return Response.json({
       totalRestaurants,
       activeRestaurants,
+      subscriptionRevenue: activeRestaurants * SUBSCRIPTION_PRICE,
       recentRestaurants,
     })
   } catch (error) {

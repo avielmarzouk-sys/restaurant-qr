@@ -39,7 +39,7 @@ export default function SuperAdminOverview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-gray-900 rounded-2xl p-6 border border-blue-500/30">
           <p className="text-gray-400 text-sm mb-1">מסעדות רשומות</p>
           <p className="text-4xl font-bold text-blue-400">{stats?.totalRestaurants ?? 0}</p>
@@ -47,6 +47,10 @@ export default function SuperAdminOverview() {
         <div className="bg-gray-900 rounded-2xl p-6 border border-green-500/30">
           <p className="text-gray-400 text-sm mb-1">מסעדות פעילות</p>
           <p className="text-4xl font-bold text-green-500">{stats?.activeRestaurants ?? 0}</p>
+        </div>
+        <div className="bg-gray-900 rounded-2xl p-6 border border-orange-500/30">
+          <p className="text-gray-400 text-sm mb-1">הכנסות ממנויים / חודש</p>
+          <p className="text-4xl font-bold text-orange-400">{stats?.subscriptionRevenue ?? 0} ₪</p>
         </div>
       </div>
 
