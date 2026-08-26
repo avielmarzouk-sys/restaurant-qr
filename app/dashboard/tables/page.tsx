@@ -14,11 +14,17 @@ export default function TablesPage() {
   const fetchTables = async () => {
     const res = await fetch('/api/tables')
     const data = await res.json()
-    setTables(Array.isArray(data.tables) ? data.tables : [])
-    setRestaurantSlug(data.restaurantSlug || '')
+    setTables(Array.isArray(data) ? data : [])
   }
 
-  useEffect(() => { fetchTables() }, [])
+  const fetchRestaurant = async () => {
+    const res = await fetch('/api/restaurant')
+    if (!res.ok) return
+    const data = await res.json()
+    if (data?.slug) setRestaurantSlug(data.slug)
+  }
+
+  useEffect(() => { fetchTables(); fetchRestaurant() }, [])
 
   const addTable = async () => {
     if (!newTableName.trim()) return

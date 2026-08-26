@@ -5,17 +5,12 @@ import { getSession } from '@/app/lib/auth'
 export async function GET() {
   try {
     const session = await getSession()
-    if (!session) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
     const categories = await prisma.category.findMany({
       where: { restaurantId: session.restaurantId as string },
       include: {
         products: {
-          include: {
-            options: true,
-          },
           orderBy: { position: 'asc' },
         },
       },
@@ -32,19 +27,22 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { nameHe, nameEn, nameRu, image } = await req.json()
+    const { nameHe, nameEn, nameFr } = await req.json()
+    if (!nameHe) return Response.json({ error: 'שם הקטגוריה בעברית חובה' }, { status: 400 })
+
+    const restaurantId = session.restaurantId as string
+
+    const count = await prisma.category.count({ where: { restaurantId } })
 
     const category = await prisma.category.create({
       data: {
-        restaurantId: session.restaurantId as string,
+        restaurantId,
         nameHe,
-        nameEn,
-        nameRu,
-        image,
+        nameEn: nameEn || null,
+        nameFr: nameFr || null,
+        position: count,
       },
     })
 
