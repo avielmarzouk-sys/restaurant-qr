@@ -24,6 +24,9 @@ model Restaurant {
   slug             String           @unique
   name             String
   logo             String?
+  coverImage       String?
+  theme            String           @default("DARK")
+  fontStyle        String           @default("SERIF")
   primaryColor     String           @default("#FF6B35")
   defaultLanguage  String           @default("he")
   isActive         Boolean          @default(true)

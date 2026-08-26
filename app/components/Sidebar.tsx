@@ -10,6 +10,7 @@ const restaurantMenuItems = [
   { href: '/dashboard/menu', icon: '🍔', label: 'תפריט' },
   { href: '/dashboard/tables', icon: '🪑', label: 'שולחנות' },
   { href: '/dashboard/stats', icon: '📈', label: 'סטטיסטיקות' },
+  { href: '/dashboard/settings', icon: '🎨', label: 'עיצוב ומיתוג' },
 ]
 
 const superAdminMenuItems = [
