@@ -10,11 +10,24 @@ export default function TablesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedQR, setSelectedQR] = useState<any>(null)
+  const [loadError, setLoadError] = useState('')
+  const [addError, setAddError] = useState('')
 
   const fetchTables = async () => {
-    const res = await fetch('/api/tables')
-    const data = await res.json()
-    setTables(Array.isArray(data) ? data : [])
+    setLoadError('')
+    try {
+      const res = await fetch('/api/tables')
+      const data = await res.json()
+      if (!res.ok) {
+        setLoadError(typeof data?.error === 'string' ? data.error : `שגיאת שרת (${res.status})`)
+        setTables([])
+        return
+      }
+      setTables(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error(err)
+      setLoadError('לא ניתן להתחבר לשרת. בדוק את הקונסול (F12) לפרטים.')
+    }
   }
 
   const fetchRestaurant = async () => {
@@ -27,22 +40,43 @@ export default function TablesPage() {
   useEffect(() => { fetchTables(); fetchRestaurant() }, [])
 
   const addTable = async () => {
-    if (!newTableName.trim()) return
+    setAddError('')
+    if (!newTableName.trim()) {
+      setAddError('יש להזין שם לשולחן')
+      return
+    }
     setLoading(true)
-    await fetch('/api/tables', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newTableName }),
-    })
-    setNewTableName('')
-    setShowAdd(false)
-    fetchTables()
-    setLoading(false)
+    try {
+      const res = await fetch('/api/tables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newTableName.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setAddError(typeof data?.error === 'string' ? data.error : `שגיאת שרת (${res.status})`)
+        setLoading(false)
+        return
+      }
+      setNewTableName('')
+      setShowAdd(false)
+      await fetchTables()
+    } catch (err) {
+      console.error(err)
+      setAddError('לא ניתן להתחבר לשרת. בדוק את הקונסול (F12) לפרטים.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const deleteTable = async (id: string) => {
     if (!confirm('למחוק?')) return
-    await fetch(`/api/tables/${id}`, { method: 'DELETE' })
+    const res = await fetch(`/api/tables/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      alert(typeof data?.error === 'string' ? data.error : `שגיאה במחיקה (${res.status})`)
+      return
+    }
     fetchTables()
   }
 
@@ -50,10 +84,16 @@ export default function TablesPage() {
     <div dir="rtl">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">ניהול שולחנות</h2>
-        <button onClick={() => setShowAdd(true)} className="bg-orange-500 text-white px-4 py-2 rounded-xl">
+        <button onClick={() => { setShowAdd(true); setAddError('') }} className="bg-orange-500 text-white px-4 py-2 rounded-xl">
           + שולחן חדש
         </button>
       </div>
+
+      {loadError && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-sm mb-6 text-center">
+          {loadError}
+        </div>
+      )}
 
       {showAdd && (
         <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 mb-6">
@@ -65,13 +105,18 @@ export default function TablesPage() {
               placeholder="שם השולחן"
               className="flex-1 bg-gray-800 text-white rounded-xl px-4 py-2 outline-none"
             />
-            <button onClick={addTable} disabled={loading} className="bg-orange-500 text-white px-4 py-2 rounded-xl">
-              שמור
+            <button onClick={addTable} disabled={loading} className="bg-orange-500 text-white px-4 py-2 rounded-xl disabled:opacity-50">
+              {loading ? 'שומר...' : 'שמור'}
             </button>
-            <button onClick={() => setShowAdd(false)} className="bg-gray-700 text-white px-4 py-2 rounded-xl">
+            <button onClick={() => { setShowAdd(false); setAddError('') }} className="bg-gray-700 text-white px-4 py-2 rounded-xl">
               ביטול
             </button>
           </div>
+          {addError && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm text-center mt-3">
+              {addError}
+            </div>
+          )}
         </div>
       )}
 
