@@ -23,10 +23,16 @@ model Restaurant {
   id               String           @id @default(cuid())
   slug             String           @unique
   name             String
-  logo             String?
+    logo             String?
   coverImage       String?
   theme            String           @default("DARK")
   fontStyle        String           @default("SERIF")
+  layoutStyle      String           @default("COMPACT")
+  cornerStyle      String           @default("ROUNDED")
+  tagline          String?
+  instagramUrl     String?
+  facebookUrl      String?
+  openingHours     String?
   primaryColor     String           @default("#FF6B35")
   defaultLanguage  String           @default("he")
   isActive         Boolean          @default(true)

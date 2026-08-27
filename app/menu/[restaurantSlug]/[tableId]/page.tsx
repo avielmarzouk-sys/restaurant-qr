@@ -55,6 +55,24 @@ const FONT_STYLE: any = {
   ROUNDED: { fontFamily: 'ui-rounded, "Segoe UI Rounded", system-ui, sans-serif' },
 }
 
+const RADIUS = {
+  ROUNDED: { sm: 'rounded-lg', md: 'rounded-xl', lg: 'rounded-2xl', full: 'rounded-full', top: 'rounded-t-3xl' },
+  SHARP: { sm: 'rounded-none', md: 'rounded-none', lg: 'rounded-none', full: 'rounded-md', top: 'rounded-none' },
+}
+
+const InstagramIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <rect x="3" y="3" width="18" height="18" rx="5"/>
+    <circle cx="12" cy="12" r="4"/>
+    <circle cx="17.2" cy="6.8" r="1"/>
+  </svg>
+)
+const FacebookIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <path d="M15 3h-2a4 4 0 0 0-4 4v3H7v4h2v7h4v-7h3l1-4h-4V7a1 1 0 0 1 1-1h3V3z"/>
+  </svg>
+)
+
 export default function MenuClientPage() {
   const params = useParams()
   const restaurantSlug = params.restaurantSlug as string
@@ -178,6 +196,9 @@ export default function MenuClientPage() {
 
   const themeKey = restaurant?.theme === 'LIGHT' ? 'LIGHT' : 'DARK'
   const T = THEME[themeKey]
+  const cornerKey = restaurant?.cornerStyle === 'SHARP' ? 'SHARP' : 'ROUNDED'
+  const R = RADIUS[cornerKey]
+  const layout = restaurant?.layoutStyle === 'GRID' || restaurant?.layoutStyle === 'MAGAZINE' ? restaurant.layoutStyle : 'COMPACT'
   const accent = restaurant?.primaryColor || '#B8860B'
   const fontClass = FONT_CLASS[restaurant?.fontStyle] || 'font-serif'
   const fontStyle = FONT_STYLE[restaurant?.fontStyle] || {}
@@ -240,7 +261,7 @@ export default function MenuClientPage() {
             <circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" strokeWidth="0.5" strokeDasharray="3 3" opacity="0.5"/>
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-24 h-24 border-2 rounded-full flex items-center justify-center scale-in" style={{ borderColor: 'var(--accent)' }}>
+            <div className={`w-24 h-24 border-2 ${R.full} flex items-center justify-center scale-in`} style={{ borderColor: 'var(--accent)' }}>
               <svg className="w-10 h-10" style={{ color: 'var(--accent)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
@@ -253,26 +274,26 @@ export default function MenuClientPage() {
           {lang === 'he' ? 'ההזמנה בדרך!' : lang === 'fr' ? 'Commande envoyée !' : 'Order on its way!'}
         </h2>
 
-        <div className={`border ${T.sheetBorder} ${T.subtleBg} rounded-2xl p-4 mb-6 slide-up-2`}>
+        <div className={`border ${T.sheetBorder} ${T.subtleBg} ${R.lg} p-4 mb-6 slide-up-2`}>
           <p className={`${T.muted} text-xs tracking-widest mb-1`}>
             {lang === 'he' ? 'מספר הזמנה' : lang === 'fr' ? 'N° de commande' : 'Order number'}
           </p>
           <p className="font-bold text-5xl" style={{ color: 'var(--accent)' }}>#{orderNumber}</p>
         </div>
 
-        <div className={`border ${T.divider} ${T.subtleBg} rounded-2xl p-5 mb-6 slide-up-3`}>
+        <div className={`border ${T.divider} ${T.subtleBg} ${R.lg} p-5 mb-6 slide-up-3`}>
           <p className={`${T.muted} text-xs tracking-widest mb-4`}>
             {lang === 'he' ? 'סטטוס הזמנה' : lang === 'fr' ? 'STATUT' : 'STATUS'}
           </p>
           <div className="flex items-center justify-between">
             <div className="flex flex-col items-center gap-2">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-black font-bold" style={{ backgroundColor: 'var(--accent)' }}>✓</div>
+              <div className={`w-10 h-10 ${R.full} flex items-center justify-center text-black font-bold`} style={{ backgroundColor: 'var(--accent)' }}>✓</div>
               <span className="text-xs" style={{ color: 'var(--accent)' }}>{lang === 'he' ? 'התקבל' : lang === 'fr' ? 'Reçu' : 'Received'}</span>
             </div>
             <div className={`flex-1 h-px mx-2 transition-all duration-500 ${['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? '' : T.dividerBg}`} style={{ backgroundColor: ['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'var(--accent)' : undefined }}></div>
             <div className="flex flex-col items-center gap-2">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'text-black font-bold' : `border ${T.mutedBorder} text-zinc-500`}`}
+                className={`w-10 h-10 ${R.full} flex items-center justify-center transition-all duration-500 ${['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'text-black font-bold' : `border ${T.mutedBorder} text-zinc-500`}`}
                 style={['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? { backgroundColor: 'var(--accent)' } : {}}
               >
                 {['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? '✓' : '2'}
@@ -282,7 +303,7 @@ export default function MenuClientPage() {
             <div className={`flex-1 h-px mx-2 transition-all duration-500 ${['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? '' : T.dividerBg}`} style={{ backgroundColor: ['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'var(--accent)' : undefined }}></div>
             <div className="flex flex-col items-center gap-2">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'text-black pulse-anim' : `border ${T.mutedBorder} text-zinc-500`}`}
+                className={`w-10 h-10 ${R.full} flex items-center justify-center transition-all duration-500 ${['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'text-black pulse-anim' : `border ${T.mutedBorder} text-zinc-500`}`}
                 style={['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? { backgroundColor: 'var(--accent)' } : {}}
               >
                 {['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? '🔥' : '3'}
@@ -291,7 +312,7 @@ export default function MenuClientPage() {
             </div>
             <div className={`flex-1 h-px mx-2 transition-all duration-500 ${['READY', 'DONE'].includes(orderStatus) ? 'bg-green-600' : T.dividerBg}`}></div>
             <div className="flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${['READY', 'DONE'].includes(orderStatus) ? 'bg-green-600 text-white pulse-anim' : `border ${T.mutedBorder} text-zinc-500`}`}>
+              <div className={`w-10 h-10 ${R.full} flex items-center justify-center transition-all duration-500 ${['READY', 'DONE'].includes(orderStatus) ? 'bg-green-600 text-white pulse-anim' : `border ${T.mutedBorder} text-zinc-500`}`}>
                 {['READY', 'DONE'].includes(orderStatus) ? '🍽️' : '4'}
               </div>
               <span className={`text-xs ${['READY', 'DONE'].includes(orderStatus) ? 'text-green-500' : T.muted}`}>{lang === 'he' ? 'מוכן!' : lang === 'fr' ? 'Prêt!' : 'Ready!'}</span>
@@ -309,7 +330,7 @@ export default function MenuClientPage() {
 
         <button
           onClick={() => { setShowSuccess(false); setOrderId(null); setOrderStatus('NEW') }}
-          className="border px-8 py-3 tracking-widest text-xs transition-all rounded-xl slide-up-3"
+          className={`border px-8 py-3 tracking-widest text-xs transition-all ${R.md} slide-up-3`}
           style={{ borderColor: 'var(--accent)', color: 'var(--accent)', opacity: 0.7 }}
         >
           {lang === 'he' ? '+ הזמן עוד' : lang === 'fr' ? '+ COMMANDER ENCORE' : '+ ORDER MORE'}
@@ -346,9 +367,12 @@ export default function MenuClientPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {restaurant.logo && (
-              <img src={restaurant.logo} alt={restaurant.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+              <img src={restaurant.logo} alt={restaurant.name} className={`w-10 h-10 ${R.sm} object-cover flex-shrink-0`} />
             )}
-            <h1 className="text-2xl font-bold tracking-wide">{restaurant.name}</h1>
+            <div>
+              <h1 className="text-2xl font-bold tracking-wide">{restaurant.name}</h1>
+              {restaurant.tagline && <p className={`text-xs ${T.muted}`}>{restaurant.tagline}</p>}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex gap-1">
@@ -356,7 +380,7 @@ export default function MenuClientPage() {
                 <button
                   key={l}
                   onClick={() => setLang(l)}
-                  className={`text-xs px-2 py-1 rounded-full border transition-all ${T.mutedBorder} ${T.muted}`}
+                  className={`text-xs px-2 py-1 ${R.full} border transition-all ${T.mutedBorder} ${T.muted}`}
                   style={lang === l ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : {}}
                 >
                   {l === 'he' ? 'עב' : l === 'en' ? 'EN' : 'FR'}
@@ -364,7 +388,7 @@ export default function MenuClientPage() {
               ))}
             </div>
             {cart.length > 0 && (
-              <button onClick={() => setShowCart(true)} className="text-black px-4 py-2 rounded-full flex items-center gap-2 font-bold text-sm" style={{ backgroundColor: 'var(--accent)' }}>
+              <button onClick={() => setShowCart(true)} className={`text-black px-4 py-2 ${R.full} flex items-center gap-2 font-bold text-sm`} style={{ backgroundColor: 'var(--accent)' }}>
                 <span>🛒</span>
                 <span>{totalItems}</span>
                 <span>{totalAmount}₪</span>
@@ -372,6 +396,28 @@ export default function MenuClientPage() {
             )}
           </div>
         </div>
+
+        {(restaurant.openingHours || restaurant.instagramUrl || restaurant.facebookUrl) && (
+          <div className={`flex items-center justify-between mt-3 pt-3 border-t ${T.divider}`}>
+            {restaurant.openingHours ? (
+              <p className={`text-xs ${T.muted}`}>🕒 {restaurant.openingHours}</p>
+            ) : <span />}
+            {(restaurant.instagramUrl || restaurant.facebookUrl) && (
+              <div className="flex items-center gap-3">
+                {restaurant.instagramUrl && (
+                  <a href={restaurant.instagramUrl} target="_blank" rel="noopener noreferrer" className={T.muted}>
+                    <InstagramIcon className="w-4 h-4" />
+                  </a>
+                )}
+                {restaurant.facebookUrl && (
+                  <a href={restaurant.facebookUrl} target="_blank" rel="noopener noreferrer" className={T.muted}>
+                    <FacebookIcon className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className={`${T.headerBg} border-b ${T.headerBorder} px-4 py-3 flex gap-3 overflow-x-auto relative z-10`}>
@@ -379,7 +425,7 @@ export default function MenuClientPage() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`flex-shrink-0 px-5 py-2 text-sm tracking-widest transition-all rounded-lg ${selectedCategory === cat.id ? 'text-black font-bold' : `border ${T.mutedBorder} ${T.muted}`}`}
+            className={`flex-shrink-0 px-5 py-2 text-sm tracking-widest transition-all ${R.md} ${selectedCategory === cat.id ? 'text-black font-bold' : `border ${T.mutedBorder} ${T.muted}`}`}
             style={selectedCategory === cat.id ? { backgroundColor: 'var(--accent)' } : {}}
           >
             {getName(cat).toUpperCase()}
@@ -387,32 +433,85 @@ export default function MenuClientPage() {
         ))}
       </div>
 
-      <div className="p-4 space-y-3 pb-32 relative z-10">
-        {currentCategory?.products?.map((product: any) => (
-          <div
-            key={product.id}
-            onClick={() => { setSelectedProduct(product); setProductOptions({ removed: [], added: [] }); setQuantity(1) }}
-            className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group rounded-2xl overflow-hidden`}
-          >
-            <div className="flex gap-4 p-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-bold text-base">{getName(product)}</h3>
-                  <span className="font-bold text-lg mr-4 flex-shrink-0" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
-                </div>
-                {getDesc(product) && <p className={`${T.muted} text-sm line-clamp-2`}>{getDesc(product)}</p>}
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', opacity: 0.7 }}>{lang === 'he' ? 'לחץ לפרטים' : lang === 'fr' ? 'Appuyer pour détails' : 'TAP FOR DETAILS'}</span>
-                  <div className="flex-1 h-px" style={{ backgroundColor: 'var(--accent)', opacity: 0.2 }}></div>
-                  <div className="w-7 h-7 border group-hover:text-black transition-all flex items-center justify-center rounded-lg" style={{ borderColor: 'var(--accent)' }}>
-                    <span className="font-bold group-hover:text-black" style={{ color: 'var(--accent)' }}>+</span>
+      <div className="p-4 pb-32 relative z-10">
+        <div className={layout === 'GRID' ? 'grid grid-cols-2 gap-3' : 'space-y-3'}>
+          {currentCategory?.products?.map((product: any) => {
+            const openProduct = () => { setSelectedProduct(product); setProductOptions({ removed: [], added: [] }); setQuantity(1) }
+
+            if (layout === 'GRID') {
+              return (
+                <div
+                  key={product.id}
+                  onClick={openProduct}
+                  className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden`}
+                >
+                  <div className="aspect-square w-full overflow-hidden">
+                    {product.image ? (
+                      <img src={product.image} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className={`w-full h-full flex items-center justify-center text-3xl ${T.subtleBg}`}>🍽️</div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-bold text-sm truncate">{getName(product)}</h3>
+                    <span className="font-bold text-sm" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
                   </div>
                 </div>
+              )
+            }
+
+            if (layout === 'MAGAZINE') {
+              return (
+                <div
+                  key={product.id}
+                  onClick={openProduct}
+                  className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden mb-4`}
+                >
+                  <div className="w-full aspect-[16/9] overflow-hidden">
+                    {product.image ? (
+                      <img src={product.image} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className={`w-full h-full flex items-center justify-center text-4xl ${T.subtleBg}`}>🍽️</div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-bold text-lg">{getName(product)}</h3>
+                      <span className="font-bold text-lg mr-4 flex-shrink-0" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
+                    </div>
+                    {getDesc(product) && <p className={`${T.muted} text-sm line-clamp-2`}>{getDesc(product)}</p>}
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <div
+                key={product.id}
+                onClick={openProduct}
+                className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden`}
+              >
+                <div className="flex gap-4 p-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-bold text-base">{getName(product)}</h3>
+                      <span className="font-bold text-lg mr-4 flex-shrink-0" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
+                    </div>
+                    {getDesc(product) && <p className={`${T.muted} text-sm line-clamp-2`}>{getDesc(product)}</p>}
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="text-xs tracking-widest" style={{ color: 'var(--accent)', opacity: 0.7 }}>{lang === 'he' ? 'לחץ לפרטים' : lang === 'fr' ? 'Appuyer pour détails' : 'TAP FOR DETAILS'}</span>
+                      <div className="flex-1 h-px" style={{ backgroundColor: 'var(--accent)', opacity: 0.2 }}></div>
+                      <div className={`w-7 h-7 border group-hover:text-black transition-all flex items-center justify-center ${R.sm}`} style={{ borderColor: 'var(--accent)' }}>
+                        <span className="font-bold group-hover:text-black" style={{ color: 'var(--accent)' }}>+</span>
+                      </div>
+                    </div>
+                  </div>
+                  {product.image && <img src={product.image} className={`w-24 h-24 object-cover flex-shrink-0 ${R.md}`} />}
+                </div>
               </div>
-              {product.image && <img src={product.image} className="w-24 h-24 object-cover flex-shrink-0 rounded-xl" />}
-            </div>
-          </div>
-        ))}
+            )
+          })}
+        </div>
 
         <div className="flex items-center justify-center gap-1.5 pt-4 pb-1 opacity-50">
           <img src="/logo.png" alt="Click2Eat" className="w-4 h-4 rounded" />
@@ -424,8 +523,8 @@ export default function MenuClientPage() {
 
       {cart.length > 0 && (
         <div className="fixed bottom-6 left-4 right-4 z-40">
-          <button onClick={() => setShowCart(true)} className="w-full text-black py-4 px-6 font-bold tracking-widest flex items-center justify-between rounded-xl" style={{ backgroundColor: 'var(--accent)' }}>
-            <div className="bg-black/20 w-8 h-8 flex items-center justify-center text-sm font-bold rounded-lg">{totalItems}</div>
+          <button onClick={() => setShowCart(true)} className={`w-full text-black py-4 px-6 font-bold tracking-widest flex items-center justify-between ${R.md}`} style={{ backgroundColor: 'var(--accent)' }}>
+            <div className={`bg-black/20 w-8 h-8 flex items-center justify-center text-sm font-bold ${R.sm}`}>{totalItems}</div>
             <span>{lang === 'he' ? 'צפה בסל' : lang === 'fr' ? 'VOIR LE PANIER' : 'VIEW CART'}</span>
             <span>{totalAmount}₪</span>
           </button>
@@ -434,12 +533,12 @@ export default function MenuClientPage() {
 
       {selectedProduct && (
         <div className={`fixed inset-0 ${T.overlay} z-50 flex items-end`} onClick={() => setSelectedProduct(null)}>
-          <div className={`${T.sheetBg} border-t ${T.sheetBorder} w-full max-h-[92vh] overflow-y-auto rounded-t-3xl`} onClick={(e) => e.stopPropagation()}>
+          <div className={`${T.sheetBg} border-t ${T.sheetBorder} w-full max-h-[92vh] overflow-y-auto ${R.top}`} onClick={(e) => e.stopPropagation()}>
             {selectedProduct.image && (
               <div className="relative">
                 <img src={selectedProduct.image} className="w-full h-52 object-cover" />
                 <div className={`absolute inset-0 bg-gradient-to-t ${themeKey === 'LIGHT' ? 'from-white via-white/50' : 'from-zinc-950 via-zinc-950/50'} to-transparent`}></div>
-                <button onClick={() => setSelectedProduct(null)} className={`absolute top-4 left-4 w-8 h-8 ${T.overlay} flex items-center justify-center text-white border ${T.mutedBorder} rounded-lg`}>×</button>
+                <button onClick={() => setSelectedProduct(null)} className={`absolute top-4 left-4 w-8 h-8 ${T.overlay} flex items-center justify-center text-white border ${T.mutedBorder} ${R.sm}`}>×</button>
               </div>
             )}
             <div className="p-6">
@@ -470,7 +569,7 @@ export default function MenuClientPage() {
                               setProductOptions((prev: any) => ({ ...prev, removed: [...prev.removed, opt] }))
                             }
                           }}
-                          className={`px-3 py-2 text-sm border transition-all rounded-xl ${isRemoved ? 'border-red-800 bg-red-900/20 text-red-400 line-through' : `${T.cardBorder} ${T.muted}`}`}
+                          className={`px-3 py-2 text-sm border transition-all ${R.md} ${isRemoved ? 'border-red-800 bg-red-900/20 text-red-400 line-through' : `${T.cardBorder} ${T.muted}`}`}
                         >
                           {getName(opt)}
                         </button>
@@ -500,11 +599,11 @@ export default function MenuClientPage() {
                               setProductOptions((prev: any) => ({ ...prev, added: [...prev.added, opt] }))
                             }
                           }}
-                          className={`w-full flex items-center justify-between px-4 py-3 border transition-all rounded-xl ${isAdded ? '' : `${T.cardBorder} ${T.muted}`}`}
+                          className={`w-full flex items-center justify-between px-4 py-3 border transition-all ${R.md} ${isAdded ? '' : `${T.cardBorder} ${T.muted}`}`}
                           style={isAdded ? { borderColor: 'var(--accent)', backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)' } : {}}
                         >
                           <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 border flex items-center justify-center transition-all rounded ${isAdded ? '' : T.mutedBorder}`} style={isAdded ? { borderColor: 'var(--accent)', backgroundColor: 'var(--accent)' } : {}}>
+                            <div className={`w-5 h-5 border flex items-center justify-center transition-all ${R.sm} ${isAdded ? '' : T.mutedBorder}`} style={isAdded ? { borderColor: 'var(--accent)', backgroundColor: 'var(--accent)' } : {}}>
                               {isAdded && <span className="text-black text-xs font-bold">✓</span>}
                             </div>
                             <span className="text-sm">{getName(opt)}</span>
@@ -517,16 +616,16 @@ export default function MenuClientPage() {
                 </div>
               )}
 
-              <div className={`flex items-center justify-between mb-6 border ${T.cardBorder} p-4 rounded-xl`}>
+              <div className={`flex items-center justify-between mb-6 border ${T.cardBorder} p-4 ${R.md}`}>
                 <span className={`${T.muted} tracking-widest text-sm`}>{lang === 'he' ? 'כמות' : 'QUANTITY'}</span>
                 <div className="flex items-center gap-6">
-                  <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className={`w-10 h-10 border ${T.cardBorder} flex items-center justify-center text-xl transition-all rounded-xl`}>−</button>
+                  <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className={`w-10 h-10 border ${T.cardBorder} flex items-center justify-center text-xl transition-all ${R.md}`}>−</button>
                   <span className="font-bold text-xl w-6 text-center">{quantity}</span>
-                  <button onClick={() => setQuantity(q => q + 1)} className="w-10 h-10 flex items-center justify-center text-xl text-black font-bold rounded-xl" style={{ backgroundColor: 'var(--accent)' }}>+</button>
+                  <button onClick={() => setQuantity(q => q + 1)} className={`w-10 h-10 flex items-center justify-center text-xl text-black font-bold ${R.md}`} style={{ backgroundColor: 'var(--accent)' }}>+</button>
                 </div>
               </div>
 
-              <button onClick={addToCart} className="w-full text-black py-4 font-bold tracking-widest text-sm rounded-xl" style={{ backgroundColor: 'var(--accent)' }}>
+              <button onClick={addToCart} className={`w-full text-black py-4 font-bold tracking-widest text-sm ${R.md}`} style={{ backgroundColor: 'var(--accent)' }}>
                 {lang === 'he' ? 'הוסף לסל' : lang === 'fr' ? 'AJOUTER AU PANIER' : 'ADD TO CART'} — {((selectedProduct.price + productOptions.added.reduce((sum: number, o: any) => sum + o.price, 0)) * quantity).toFixed(0)}₪
               </button>
             </div>
@@ -536,10 +635,10 @@ export default function MenuClientPage() {
 
       {showCart && (
         <div className={`fixed inset-0 ${T.overlay} z-50 flex items-end`}>
-          <div className={`${T.sheetBg} border-t ${T.sheetBorder} w-full max-h-[90vh] overflow-y-auto rounded-t-3xl`}>
+          <div className={`${T.sheetBg} border-t ${T.sheetBorder} w-full max-h-[90vh] overflow-y-auto ${R.top}`}>
             <div className={`flex items-center justify-between p-6 border-b ${T.divider}`}>
               <h2 className="text-lg font-bold tracking-widest">{lang === 'he' ? 'הסל שלי' : lang === 'fr' ? 'MON PANIER' : 'MY ORDER'}</h2>
-              <button onClick={() => setShowCart(false)} className={`w-8 h-8 border ${T.mutedBorder} flex items-center justify-center ${T.muted} rounded-lg`}>×</button>
+              <button onClick={() => setShowCart(false)} className={`w-8 h-8 border ${T.mutedBorder} flex items-center justify-center ${T.muted} ${R.sm}`}>×</button>
             </div>
             <div className={`p-6 space-y-3 border-b ${T.divider}`}>
               {cart.map((item) => (
@@ -561,18 +660,18 @@ export default function MenuClientPage() {
                 value={customerNote}
                 onChange={(e) => setCustomerNote(e.target.value)}
                 placeholder={lang === 'he' ? 'הערות מיוחדות...' : lang === 'fr' ? 'Remarques spéciales...' : 'Special requests...'}
-                className={`w-full ${T.inputBg} border ${T.inputBorder} ${T.text} px-4 py-3 text-sm outline-none resize-none h-16 mb-6 transition-all rounded-xl`}
+                className={`w-full ${T.inputBg} border ${T.inputBorder} ${T.text} px-4 py-3 text-sm outline-none resize-none h-16 mb-6 transition-all ${R.md}`}
               />
               <div className="flex justify-between mb-6">
                 <span className={`tracking-widest text-sm ${T.muted}`}>{lang === 'he' ? 'סה"כ' : 'TOTAL'}</span>
                 <span className="font-bold text-2xl" style={{ color: 'var(--accent)' }}>{totalAmount}₪</span>
               </div>
               {orderError && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm text-center mb-4">
+                <div className={`bg-red-500/10 border border-red-500/20 ${R.md} p-3 text-red-400 text-sm text-center mb-4`}>
                   {orderError}
                 </div>
               )}
-              <button onClick={placeOrder} className="w-full text-black py-4 font-bold tracking-widest text-sm rounded-xl" style={{ backgroundColor: 'var(--accent)' }}>
+              <button onClick={placeOrder} className={`w-full text-black py-4 font-bold tracking-widest text-sm ${R.md}`} style={{ backgroundColor: 'var(--accent)' }}>
                 {lang === 'he' ? 'שלח הזמנה' : lang === 'fr' ? 'ENVOYER LA COMMANDE' : 'PLACE ORDER'}
               </button>
             </div>
