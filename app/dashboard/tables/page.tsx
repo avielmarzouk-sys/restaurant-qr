@@ -23,7 +23,12 @@ export default function TablesPage() {
         setTables([])
         return
       }
-      setTables(Array.isArray(data) ? data : [])
+      // Le serveur peut renvoyer soit un tableau simple [...], soit un objet { tables: [...], restaurantSlug }
+      const list = Array.isArray(data) ? data : Array.isArray(data?.tables) ? data.tables : []
+      setTables(list)
+      if (typeof data?.restaurantSlug === 'string' && data.restaurantSlug) {
+        setRestaurantSlug(data.restaurantSlug)
+      }
     } catch (err) {
       console.error(err)
       setLoadError('לא ניתן להתחבר לשרת. בדוק את הקונסול (F12) לפרטים.')
