@@ -98,6 +98,7 @@ export default function MenuClientPage() {
   const [waiterCallSent, setWaiterCallSent] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'default' | 'asc' | 'desc'>('default')
+  const [waitTime, setWaitTime] = useState<number | null>(null)
 
   useEffect(() => {
     fetch(`/api/menu/${restaurantSlug}`)
@@ -126,6 +127,23 @@ export default function MenuClientPage() {
     }, 3000)
     return () => clearInterval(interval)
   }, [orderId, showSuccess])
+
+  useEffect(() => {
+    if (!restaurantSlug) return
+    const fetchWaitTime = () => {
+      fetch(`/api/wait-time/${restaurantSlug}`)
+        .then(r => r.json())
+        .then(data => {
+          if (typeof data.estimatedMinutes === 'number') setWaitTime(data.estimatedMinutes)
+        })
+        .catch(() => {
+          // silent fail, badge simply stays hidden
+        })
+    }
+    fetchWaitTime()
+    const interval = setInterval(fetchWaitTime, 30000)
+    return () => clearInterval(interval)
+  }, [restaurantSlug])
 
   const getName = (item: any) => {
     if (lang === 'fr') return item.nameFr || item.nameEn || item.nameHe
@@ -303,6 +321,15 @@ export default function MenuClientPage() {
           <p className="font-bold text-5xl" style={{ color: 'var(--accent)' }}>#{orderNumber}</p>
         </div>
 
+        {waitTime !== null && ['NEW', 'ACCEPTED', 'PREPARING'].includes(orderStatus) && (
+          <div className={`border ${T.sheetBorder} ${T.subtleBg} ${R.lg} p-3 mb-6 slide-up-2 flex items-center justify-center gap-2`}>
+            <span>⏱️</span>
+            <p className={`text-sm ${T.muted}`}>
+              {lang === 'he' ? `זמן המתנה משוער: כ-${waitTime} דקות` : lang === 'fr' ? `Temps d'attente estimé : environ ${waitTime} min` : `Estimated wait: about ${waitTime} min`}
+            </p>
+          </div>
+        )}
+
         <div className={`border ${T.divider} ${T.subtleBg} ${R.lg} p-5 mb-6 slide-up-3`}>
           <p className={`${T.muted} text-xs tracking-widest mb-4`}>
             {lang === 'he' ? 'סטטוס הזמנה' : lang === 'fr' ? 'STATUT' : 'STATUS'}
@@ -461,6 +488,15 @@ export default function MenuClientPage() {
             )}
           </div>
         </div>
+
+        {waitTime !== null && (
+          <div className="flex items-center gap-1 mt-2">
+            <span className="text-xs" style={{ color: 'var(--accent)' }}>⏱️</span>
+            <span className={`text-xs ${T.muted}`}>
+              {lang === 'he' ? `זמן המתנה משוער: כ-${waitTime} דק'` : lang === 'fr' ? `Temps d'attente estimé : ~${waitTime} min` : `Estimated wait time: ~${waitTime} min`}
+            </span>
+          </div>
+        )}
 
         {(restaurant.openingHours || restaurant.instagramUrl || restaurant.facebookUrl) && (
           <div className={`flex items-center justify-between mt-3 pt-3 border-t ${T.divider}`}>
