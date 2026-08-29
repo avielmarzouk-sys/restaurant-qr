@@ -23,7 +23,7 @@ model Restaurant {
   id               String           @id @default(cuid())
   slug             String           @unique
   name             String
-    logo             String?
+  logo             String?
   coverImage       String?
   theme            String           @default("DARK")
   fontStyle        String           @default("SERIF")
@@ -44,6 +44,7 @@ model Restaurant {
   categories       Category[]
   products         Product[]
   orders           Order[]
+  waiterCalls      WaiterCall[]
 }
 
 model RestaurantUser {
@@ -59,13 +60,14 @@ model RestaurantUser {
 }
 
 model Table {
-  id           String     @id @default(cuid())
+  id           String       @id @default(cuid())
   restaurantId String
   name         String
-  isActive     Boolean    @default(true)
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  isActive     Boolean      @default(true)
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
   orders       Order[]
-  createdAt    DateTime   @default(now())
+  waiterCalls  WaiterCall[]
+  createdAt    DateTime     @default(now())
 }
 
 model Category {
@@ -146,4 +148,14 @@ model OrderItem {
   order           Order    @relation(fields: [orderId], references: [id])
   product         Product  @relation(fields: [productId], references: [id])
   createdAt       DateTime @default(now())
+}
+
+model WaiterCall {
+  id           String     @id @default(cuid())
+  restaurantId String
+  tableId      String
+  status       String     @default("PENDING")
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  table        Table      @relation(fields: [tableId], references: [id])
+  createdAt    DateTime   @default(now())
 }

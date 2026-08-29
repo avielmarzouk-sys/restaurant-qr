@@ -94,6 +94,8 @@ export default function MenuClientPage() {
   const [orderError, setOrderError] = useState('')
   const [orderId, setOrderId] = useState<string | null>(null)
   const [orderStatus, setOrderStatus] = useState<string>('NEW')
+  const [waiterCallLoading, setWaiterCallLoading] = useState(false)
+  const [waiterCallSent, setWaiterCallSent] = useState(false)
 
   useEffect(() => {
     fetch(`/api/menu/${restaurantSlug}`)
@@ -191,6 +193,24 @@ export default function MenuClientPage() {
       )
     } finally {
       setSending(false)
+    }
+  }
+
+  const callWaiter = async () => {
+    if (waiterCallSent || waiterCallLoading || !restaurant?.id) return
+    setWaiterCallLoading(true)
+    try {
+      await fetch('/api/waiter-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: restaurant.id, tableId }),
+      })
+      setWaiterCallSent(true)
+      setTimeout(() => setWaiterCallSent(false), 120000)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setWaiterCallLoading(false)
     }
   }
 
@@ -374,7 +394,20 @@ export default function MenuClientPage() {
               {restaurant.tagline && <p className={`text-xs ${T.muted}`}>{restaurant.tagline}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={callWaiter}
+              disabled={waiterCallSent || waiterCallLoading}
+              className={`text-xs px-3 py-2 ${R.full} border transition-all flex items-center gap-1 disabled:opacity-70`}
+              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+            >
+              <span>🛎️</span>
+              <span className="hidden sm:inline">
+                {waiterCallSent
+                  ? (lang === 'he' ? 'נשלח!' : lang === 'fr' ? 'Envoyé !' : 'Sent!')
+                  : (lang === 'he' ? 'קרא למלצר' : lang === 'fr' ? 'Appeler le serveur' : 'Call waiter')}
+              </span>
+            </button>
             <div className="flex gap-1">
               {(['he', 'en', 'fr'] as const).map((l) => (
                 <button

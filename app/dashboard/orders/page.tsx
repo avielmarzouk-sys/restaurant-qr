@@ -18,7 +18,9 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [waiterCalls, setWaiterCalls] = useState<any[]>([])
   const prevNewOrders = useRef(0)
+  const prevWaiterCalls = useRef(0)
   const audioContext = useRef<AudioContext | null>(null)
 
   // Le navigateur bloque le son tant que l'utilisateur n'a pas interagi avec la page.
@@ -86,6 +88,19 @@ export default function OrdersPage() {
     setLoading(false)
   }
 
+  const fetchWaiterCalls = async () => {
+    try {
+      const res = await fetch('/api/waiter-call')
+      const data = await res.json()
+      setWaiterCalls(Array.isArray(data) ? data : [])
+    } catch (e) {}
+  }
+
+  const markWaiterCallDone = async (id: string) => {
+    await fetch(`/api/waiter-call/${id}`, { method: 'PATCH' })
+    fetchWaiterCalls()
+  }
+
   const clearOldOrders = async () => {
     if (!confirm('למחוק את כל ההזמנות שהושלמו ובוטלו?')) return
     await fetch('/api/orders', { method: 'DELETE' })
@@ -101,8 +116,13 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders()
+    fetchWaiterCalls()
     const interval = setInterval(fetchOrders, 5000)
-    return () => clearInterval(interval)
+    const waiterInterval = setInterval(fetchWaiterCalls, 5000)
+    return () => {
+      clearInterval(interval)
+      clearInterval(waiterInterval)
+    }
   }, [])
 
   useEffect(() => {
@@ -112,6 +132,13 @@ export default function OrdersPage() {
     }
     prevNewOrders.current = newCount
   }, [orders, soundEnabled])
+
+  useEffect(() => {
+    if (waiterCalls.length > prevWaiterCalls.current) {
+      playSound()
+    }
+    prevWaiterCalls.current = waiterCalls.length
+  }, [waiterCalls, soundEnabled])
 
   const updateStatus = async (orderId: string, status: string) => {
     await fetch(`/api/orders/${orderId}`, {
@@ -158,6 +185,33 @@ export default function OrdersPage() {
           </div>
         </div>
       </div>
+
+      {waiterCalls.length > 0 && (
+        <div className="bg-orange-500/10 border border-orange-500 rounded-2xl p-4 mb-6">
+          <h3 className="font-bold mb-3 text-orange-400 flex items-center gap-2">
+            <span>🛎️</span>
+            <span>קריאות למלצר ({waiterCalls.length})</span>
+          </h3>
+          <div className="space-y-2">
+            {waiterCalls.map((call) => (
+              <div key={call.id} className="flex items-center justify-between bg-gray-900 rounded-xl px-4 py-3 border border-orange-500/30">
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-orange-400">{call.table?.name}</span>
+                  <span className="text-gray-500 text-sm">
+                    {new Date(call.createdAt).toLocaleTimeString('he-IL')}
+                  </span>
+                </div>
+                <button
+                  onClick={() => markWaiterCallDone(call.id)}
+                  className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-bold"
+                >
+                  טופל
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {['NEW', 'ACCEPTED', 'PREPARING', 'READY'].map((status) => (
