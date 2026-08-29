@@ -385,6 +385,13 @@ export default function MenuClientPage() {
     : []
 
   const productsToShow = isSearching ? sortProducts(searchResults) : sortProducts(currentCategory?.products || [])
+  const featuredProducts = allProductsFlat.filter((p: any) => p.isFeatured)
+
+  const openProductFromCard = (product: any) => {
+    setSelectedProduct(product)
+    setProductOptions({ removed: [], added: [] })
+    setQuantity(1)
+  }
 
   return (
     <div className={`min-h-screen ${T.bg} ${T.text} ${fontClass} relative`} style={{ ...cssVars, ...fontStyle }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
@@ -478,6 +485,36 @@ export default function MenuClientPage() {
         )}
       </div>
 
+      {!isSearching && featuredProducts.length > 0 && (
+        <div className={`${T.headerBg} border-b ${T.headerBorder} px-4 py-4 relative z-10`}>
+          <p className="text-xs tracking-widest mb-3 flex items-center gap-2" style={{ color: 'var(--accent)' }}>
+            <span>⭐</span>
+            <span>{lang === 'he' ? 'מומלצים על ידינו' : lang === 'fr' ? 'Nos recommandations' : 'Our recommendations'}</span>
+          </p>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {featuredProducts.map((product: any) => (
+              <div
+                key={product.id}
+                onClick={() => openProductFromCard(product)}
+                className={`flex-shrink-0 w-36 ${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer ${R.lg} overflow-hidden`}
+              >
+                <div className="w-full h-24 overflow-hidden">
+                  {product.image ? (
+                    <img src={product.image} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className={`w-full h-full flex items-center justify-center text-2xl ${T.subtleBg}`}>🍽️</div>
+                  )}
+                </div>
+                <div className="p-2">
+                  <h4 className="font-bold text-xs truncate">{getName(product)}</h4>
+                  <span className="font-bold text-xs" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className={`${T.headerBg} border-b ${T.headerBorder} px-4 py-3 flex gap-3 overflow-x-auto relative z-10`}>
         {restaurant.categories?.map((cat: any) => (
           <button
@@ -533,8 +570,11 @@ export default function MenuClientPage() {
                 <div
                   key={product.id}
                   onClick={openProduct}
-                  className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden`}
+                  className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden relative`}
                 >
+                  {product.isFeatured && (
+                    <span className="absolute top-2 right-2 z-10 text-xs bg-yellow-400 text-black px-1.5 py-0.5 rounded-full font-bold">⭐</span>
+                  )}
                   <div className="aspect-square w-full overflow-hidden">
                     {product.image ? (
                       <img src={product.image} className="w-full h-full object-cover" />
@@ -558,8 +598,11 @@ export default function MenuClientPage() {
                 <div
                   key={product.id}
                   onClick={openProduct}
-                  className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden mb-4`}
+                  className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden mb-4 relative`}
                 >
+                  {product.isFeatured && (
+                    <span className="absolute top-2 right-2 z-10 text-xs bg-yellow-400 text-black px-1.5 py-0.5 rounded-full font-bold">⭐</span>
+                  )}
                   <div className="w-full aspect-[16/9] overflow-hidden">
                     {product.image ? (
                       <img src={product.image} className="w-full h-full object-cover" />
@@ -593,7 +636,10 @@ export default function MenuClientPage() {
                       <p className="text-[10px] tracking-widest mb-1" style={{ color: 'var(--accent)', opacity: 0.7 }}>{product.categoryName.toUpperCase()}</p>
                     )}
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold text-base">{getName(product)}</h3>
+                      <h3 className="font-bold text-base flex items-center gap-1.5">
+                        {product.isFeatured && <span className="text-sm">⭐</span>}
+                        {getName(product)}
+                      </h3>
                       <span className="font-bold text-lg mr-4 flex-shrink-0" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
                     </div>
                     {getDesc(product) && <p className={`${T.muted} text-sm line-clamp-2`}>{getDesc(product)}</p>}

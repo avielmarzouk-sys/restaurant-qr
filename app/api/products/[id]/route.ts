@@ -21,6 +21,7 @@ export async function PATCH(
     if (body.price !== undefined) data.price = parseFloat(body.price)
     if (typeof body.image === 'string' || body.image === null) data.image = body.image || null
     if (typeof body.isAvailable === 'boolean') data.isAvailable = body.isAvailable
+    if (typeof body.isFeatured === 'boolean') data.isFeatured = body.isFeatured
     if (typeof body.categoryId === 'string') data.categoryId = body.categoryId
     if (typeof body.position === 'number') data.position = body.position
 

@@ -12,6 +12,7 @@ type Product = {
   price: number
   image?: string | null
   isAvailable: boolean
+  isFeatured: boolean
   position: number
 }
 
@@ -55,6 +56,7 @@ export default function MenuPage() {
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
   const [confirmingProductId, setConfirmingProductId] = useState<string | null>(null)
   const [togglingProductId, setTogglingProductId] = useState<string | null>(null)
+  const [togglingFeaturedId, setTogglingFeaturedId] = useState<string | null>(null)
 
   const fetchCategories = async () => {
     setLoadError('')
@@ -172,6 +174,17 @@ export default function MenuPage() {
       body: JSON.stringify({ isAvailable: !product.isAvailable }),
     })
     setTogglingProductId(null)
+    if (res.ok) fetchCategories()
+  }
+
+  const toggleFeatured = async (product: Product) => {
+    setTogglingFeaturedId(product.id)
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isFeatured: !product.isFeatured }),
+    })
+    setTogglingFeaturedId(null)
     if (res.ok) fetchCategories()
   }
 
@@ -379,6 +392,18 @@ export default function MenuPage() {
                         }`}
                       >
                         {p.isAvailable ? '✓ זמין' : 'לא זמין'}
+                      </button>
+                      <button
+                        onClick={() => toggleFeatured(p)}
+                        disabled={togglingFeaturedId === p.id}
+                        title="מומלץ / פופולרי"
+                        className={`text-xs px-3 py-1.5 rounded-lg disabled:opacity-50 flex-shrink-0 ${
+                          p.isFeatured
+                            ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20'
+                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        }`}
+                      >
+                        {p.isFeatured ? '⭐ מומלץ' : '☆ מומלץ'}
                       </button>
                       <button onClick={() => openEditProduct(p)} className="text-gray-400 hover:text-white text-sm flex-shrink-0">
                         ✏️
