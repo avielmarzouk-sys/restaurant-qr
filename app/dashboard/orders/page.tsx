@@ -17,15 +17,42 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
-  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(true)
   const prevNewOrders = useRef(0)
   const audioContext = useRef<AudioContext | null>(null)
+
+  // Le navigateur bloque le son tant que l'utilisateur n'a pas interagi avec la page.
+  // Ce bloc "débloque" le son dès le premier clic/touche sur la page, pour que
+  // la sonnerie fonctionne automatiquement sans qu'il faille cliquer sur le bouton.
+  useEffect(() => {
+    const unlockAudio = () => {
+      try {
+        if (!audioContext.current) {
+          audioContext.current = new AudioContext()
+        }
+        if (audioContext.current.state === 'suspended') {
+          audioContext.current.resume()
+        }
+      } catch (e) {}
+    }
+    window.addEventListener('click', unlockAudio, { once: true })
+    window.addEventListener('keydown', unlockAudio, { once: true })
+    window.addEventListener('touchstart', unlockAudio, { once: true })
+    return () => {
+      window.removeEventListener('click', unlockAudio)
+      window.removeEventListener('keydown', unlockAudio)
+      window.removeEventListener('touchstart', unlockAudio)
+    }
+  }, [])
 
   const playSound = () => {
     if (!soundEnabled) return
     try {
       const ctx = audioContext.current || new AudioContext()
       audioContext.current = ctx
+      if (ctx.state === 'suspended') {
+        ctx.resume()
+      }
       const notes = [523, 659, 784]
       notes.forEach((freq, i) => {
         const oscillator = ctx.createOscillator()

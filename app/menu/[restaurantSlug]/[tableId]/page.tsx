@@ -230,7 +230,7 @@ export default function MenuClientPage() {
             <circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" strokeWidth="3" strokeDasharray="70 210" strokeLinecap="round"/>
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl">🥩</span>
+            <span className="text-3xl">🍽️</span>
           </div>
         </div>
         <p className="tracking-widest text-sm pulse-text" style={{ color: 'var(--accent)' }}>
