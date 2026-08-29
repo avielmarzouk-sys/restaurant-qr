@@ -72,6 +72,33 @@ export default function OrdersPage() {
     } catch (e) {}
   }
 
+  // Sonnerie différente, réservée aux appels du serveur (style "ding-dong"),
+  // pour ne pas la confondre avec la sonnerie des nouvelles commandes.
+  const playWaiterSound = () => {
+    if (!soundEnabled) return
+    try {
+      const ctx = audioContext.current || new AudioContext()
+      audioContext.current = ctx
+      if (ctx.state === 'suspended') {
+        ctx.resume()
+      }
+      const notes = [880, 660, 880, 660]
+      notes.forEach((freq, i) => {
+        const oscillator = ctx.createOscillator()
+        const gainNode = ctx.createGain()
+        oscillator.connect(gainNode)
+        gainNode.connect(ctx.destination)
+        oscillator.type = 'triangle'
+        oscillator.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.3)
+        gainNode.gain.setValueAtTime(0, ctx.currentTime + i * 0.3)
+        gainNode.gain.linearRampToValueAtTime(0.4, ctx.currentTime + i * 0.3 + 0.05)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.3 + 0.25)
+        oscillator.start(ctx.currentTime + i * 0.3)
+        oscillator.stop(ctx.currentTime + i * 0.3 + 0.25)
+      })
+    } catch (e) {}
+  }
+
   const fetchOrders = async () => {
     const res = await fetch('/api/orders')
     const data = await res.json()
@@ -135,7 +162,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (waiterCalls.length > prevWaiterCalls.current) {
-      playSound()
+      playWaiterSound()
     }
     prevWaiterCalls.current = waiterCalls.length
   }, [waiterCalls, soundEnabled])

@@ -96,6 +96,8 @@ export default function MenuClientPage() {
   const [orderStatus, setOrderStatus] = useState<string>('NEW')
   const [waiterCallLoading, setWaiterCallLoading] = useState(false)
   const [waiterCallSent, setWaiterCallSent] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<'default' | 'asc' | 'desc'>('default')
 
   useEffect(() => {
     fetch(`/api/menu/${restaurantSlug}`)
@@ -360,6 +362,29 @@ export default function MenuClientPage() {
   )
 
   const currentCategory = restaurant.categories?.find((c: any) => c.id === selectedCategory)
+  const isSearching = searchQuery.trim().length > 0
+
+  const allProductsFlat = (restaurant.categories || []).flatMap((cat: any) =>
+    (cat.products || []).map((p: any) => ({ ...p, categoryName: getName(cat) }))
+  )
+
+  const sortProducts = (list: any[]) => {
+    if (sortBy === 'asc') return [...list].sort((a, b) => a.price - b.price)
+    if (sortBy === 'desc') return [...list].sort((a, b) => b.price - a.price)
+    return list
+  }
+
+  const searchResults = isSearching
+    ? allProductsFlat.filter((p: any) => {
+        const q = searchQuery.trim().toLowerCase()
+        return (
+          getName(p)?.toLowerCase().includes(q) ||
+          getDesc(p)?.toLowerCase().includes(q)
+        )
+      })
+    : []
+
+  const productsToShow = isSearching ? sortProducts(searchResults) : sortProducts(currentCategory?.products || [])
 
   return (
     <div className={`min-h-screen ${T.bg} ${T.text} ${fontClass} relative`} style={{ ...cssVars, ...fontStyle }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
@@ -457,18 +482,50 @@ export default function MenuClientPage() {
         {restaurant.categories?.map((cat: any) => (
           <button
             key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`flex-shrink-0 px-5 py-2 text-sm tracking-widest transition-all ${R.md} ${selectedCategory === cat.id ? 'text-black font-bold' : `border ${T.mutedBorder} ${T.muted}`}`}
-            style={selectedCategory === cat.id ? { backgroundColor: 'var(--accent)' } : {}}
+            onClick={() => { setSelectedCategory(cat.id); setSearchQuery('') }}
+            className={`flex-shrink-0 px-5 py-2 text-sm tracking-widest transition-all ${R.md} ${!isSearching && selectedCategory === cat.id ? 'text-black font-bold' : `border ${T.mutedBorder} ${T.muted}`}`}
+            style={!isSearching && selectedCategory === cat.id ? { backgroundColor: 'var(--accent)' } : {}}
           >
             {getName(cat).toUpperCase()}
           </button>
         ))}
       </div>
 
+      <div className={`${T.headerBg} border-b ${T.headerBorder} px-4 py-3 flex gap-2 relative z-10`}>
+        <div className={`flex-1 flex items-center gap-2 ${T.inputBg} border ${T.inputBorder} px-3 ${R.md}`}>
+          <span className={T.muted}>🔍</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={lang === 'he' ? 'חיפוש מנה...' : lang === 'fr' ? 'Rechercher un plat...' : 'Search a dish...'}
+            className={`flex-1 bg-transparent ${T.text} py-2 text-sm outline-none`}
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className={T.muted}>×</button>
+          )}
+        </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as 'default' | 'asc' | 'desc')}
+          className={`${T.inputBg} border ${T.inputBorder} ${T.text} text-xs px-2 ${R.md} outline-none`}
+        >
+          <option value="default">{lang === 'he' ? 'מיון' : lang === 'fr' ? 'Trier' : 'Sort'}</option>
+          <option value="asc">{lang === 'he' ? 'מחיר: נמוך לגבוה' : lang === 'fr' ? 'Prix croissant' : 'Price: low to high'}</option>
+          <option value="desc">{lang === 'he' ? 'מחיר: גבוה לנמוך' : lang === 'fr' ? 'Prix décroissant' : 'Price: high to low'}</option>
+        </select>
+      </div>
+
       <div className="p-4 pb-32 relative z-10">
+        {isSearching && (
+          <p className={`${T.muted} text-xs mb-3`}>
+            {productsToShow.length === 0
+              ? (lang === 'he' ? 'לא נמצאו תוצאות' : lang === 'fr' ? 'Aucun résultat trouvé' : 'No results found')
+              : (lang === 'he' ? `${productsToShow.length} תוצאות` : lang === 'fr' ? `${productsToShow.length} résultat(s)` : `${productsToShow.length} result(s)`)}
+          </p>
+        )}
         <div className={layout === 'GRID' ? 'grid grid-cols-2 gap-3' : 'space-y-3'}>
-          {currentCategory?.products?.map((product: any) => {
+          {productsToShow.map((product: any) => {
             const openProduct = () => { setSelectedProduct(product); setProductOptions({ removed: [], added: [] }); setQuantity(1) }
 
             if (layout === 'GRID') {
@@ -486,6 +543,9 @@ export default function MenuClientPage() {
                     )}
                   </div>
                   <div className="p-3">
+                    {isSearching && product.categoryName && (
+                      <p className="text-[9px] tracking-widest mb-1" style={{ color: 'var(--accent)', opacity: 0.7 }}>{product.categoryName.toUpperCase()}</p>
+                    )}
                     <h3 className="font-bold text-sm truncate">{getName(product)}</h3>
                     <span className="font-bold text-sm" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
                   </div>
@@ -508,6 +568,9 @@ export default function MenuClientPage() {
                     )}
                   </div>
                   <div className="p-4">
+                    {isSearching && product.categoryName && (
+                      <p className="text-[10px] tracking-widest mb-1" style={{ color: 'var(--accent)', opacity: 0.7 }}>{product.categoryName.toUpperCase()}</p>
+                    )}
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-bold text-lg">{getName(product)}</h3>
                       <span className="font-bold text-lg mr-4 flex-shrink-0" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
@@ -526,6 +589,9 @@ export default function MenuClientPage() {
               >
                 <div className="flex gap-4 p-4">
                   <div className="flex-1 min-w-0">
+                    {isSearching && product.categoryName && (
+                      <p className="text-[10px] tracking-widest mb-1" style={{ color: 'var(--accent)', opacity: 0.7 }}>{product.categoryName.toUpperCase()}</p>
+                    )}
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-bold text-base">{getName(product)}</h3>
                       <span className="font-bold text-lg mr-4 flex-shrink-0" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
