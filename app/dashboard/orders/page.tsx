@@ -258,8 +258,11 @@ export default function OrdersPage() {
                   className="bg-gray-800 rounded-xl p-3 cursor-pointer hover:border hover:border-orange-500 transition-all"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-orange-400">#{order.orderNumber}</span>
-                    <span className="text-xs text-gray-400">{order.table?.name}</span>
+                    <span className="text-lg font-extrabold text-white flex items-center gap-1">
+                      <span>🪑</span>
+                      <span>{order.table?.name}</span>
+                    </span>
+                    <span className="text-xs text-gray-500 font-bold">#{order.orderNumber}</span>
                   </div>
                   <div className="space-y-1">
                     {order.items?.slice(0, 2).map((item: any) => (
@@ -332,12 +335,15 @@ export default function OrdersPage() {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedOrder(null)}>
           <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md border border-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-xl">הזמנה #{selectedOrder.orderNumber}</h3>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-extrabold text-2xl text-white flex items-center gap-2">
+                <span>🪑</span>
+                <span>{selectedOrder.table?.name}</span>
+              </h3>
               <button onClick={() => setSelectedOrder(null)} className="text-gray-500 text-2xl">×</button>
             </div>
             <div className="space-y-1 mb-4">
-              <p className="text-gray-400 text-sm">שולחן: {selectedOrder.table?.name}</p>
+              <p className="text-orange-400 text-sm font-bold">הזמנה #{selectedOrder.orderNumber}</p>
               <p className="text-gray-400 text-sm">שעה: {new Date(selectedOrder.createdAt).toLocaleTimeString('he-IL')}</p>
             </div>
             <div className="space-y-3 mb-4">
