@@ -26,7 +26,7 @@ const SECTION_TOGGLES = [
   { key: 'showWaiterCall', label: '🛎️ קריאה למלצר', desc: 'כפתור קריאת מלצר בראש התפריט' },
   { key: 'showSearch', label: '🔍 חיפוש ומיון', desc: 'שורת חיפוש ומיון לפי מחיר' },
   { key: 'showFeatured', label: '⭐ מומלצים', desc: 'רצועת "מומלצים על ידינו"' },
-  { key: 'showWaitTime', label: '⏱️ זמן המתנה', desc: 'תג זמן המתנה משוער' },
+  
 ]
 
 const getThemeDefaults = (theme: string) =>

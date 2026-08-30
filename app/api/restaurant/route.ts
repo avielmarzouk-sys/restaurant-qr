@@ -24,7 +24,6 @@ const SELECT = {
   showWaiterCall: true,
   showSearch: true,
   showFeatured: true,
-  showWaitTime: true,
   welcomeMessageHe: true,
   welcomeMessageEn: true,
   welcomeMessageFr: true,
@@ -86,7 +85,6 @@ export async function PATCH(req: NextRequest) {
     if (typeof body.showWaiterCall === 'boolean') data.showWaiterCall = body.showWaiterCall
     if (typeof body.showSearch === 'boolean') data.showSearch = body.showSearch
     if (typeof body.showFeatured === 'boolean') data.showFeatured = body.showFeatured
-    if (typeof body.showWaitTime === 'boolean') data.showWaitTime = body.showWaitTime
 
     // Message d'accueil personnalisé (par langue)
     if (typeof body.welcomeMessageHe === 'string' || body.welcomeMessageHe === null) data.welcomeMessageHe = body.welcomeMessageHe || null
