@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type CSSProperties } from 'react'
+import { useState, useEffect, useRef, type CSSProperties } from 'react'
 import { useParams } from 'next/navigation'
 
 const THEME = {
@@ -113,6 +113,8 @@ export default function MenuClientPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'default' | 'asc' | 'desc'>('default')
   const [isPreview, setIsPreview] = useState(false)
+  const [statusToast, setStatusToast] = useState<string | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -172,13 +174,71 @@ export default function MenuClientPage() {
       })
   }, [restaurantSlug])
 
+  // Message affiché dans le petit bandeau (et utilisé pour la notification système) à chaque changement de statut
+  const getStatusToastMessage = (status: string) => {
+    if (status === 'ACCEPTED') return lang === 'he' ? '✓ ההזמנה אושרה!' : lang === 'fr' ? '✓ Commande acceptée !' : '✓ Order accepted!'
+    if (status === 'PREPARING') return lang === 'he' ? '🔥 המנות שלך בהכנה!' : lang === 'fr' ? '🔥 En préparation !' : '🔥 Preparing your dishes!'
+    if (status === 'READY') return lang === 'he' ? '🍽️ ההזמנה מוכנה!' : lang === 'fr' ? '🍽️ Commande prête !' : '🍽️ Order is ready!'
+    if (status === 'DONE') return lang === 'he' ? '✓ תיאבון!' : lang === 'fr' ? '✓ Bon appétit !' : '✓ Enjoy your meal!'
+    if (status === 'CANCELLED') return lang === 'he' ? 'ההזמנה בוטלה' : lang === 'fr' ? 'Commande annulée' : 'Order cancelled'
+    return ''
+  }
+
+  const playNotifySound = () => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+      }
+      const ctx = audioContextRef.current
+      if (ctx.state === 'suspended') ctx.resume()
+      const notes = [660, 880]
+      notes.forEach((freq, i) => {
+        const oscillator = ctx.createOscillator()
+        const gainNode = ctx.createGain()
+        oscillator.connect(gainNode)
+        gainNode.connect(ctx.destination)
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15)
+        gainNode.gain.setValueAtTime(0, ctx.currentTime + i * 0.15)
+        gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + i * 0.15 + 0.05)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3)
+        oscillator.start(ctx.currentTime + i * 0.15)
+        oscillator.stop(ctx.currentTime + i * 0.15 + 0.3)
+      })
+    } catch (e) {}
+  }
+
+  // Prévient le client d'un changement de statut de 3 façons à la fois : bandeau visuel,
+  // vibration (téléphones qui le supportent) et son — plus une vraie notification système
+  // si le client a déjà autorisé les notifications et que l'onglet n'est pas au premier plan.
+  const notifyStatusChange = (status: string) => {
+    const message = getStatusToastMessage(status)
+    if (!message) return
+    setStatusToast(message)
+    setTimeout(() => setStatusToast(null), 4000)
+    try {
+      if (navigator.vibrate) navigator.vibrate([120, 60, 120])
+    } catch (e) {}
+    playNotifySound()
+    try {
+      if (typeof document !== 'undefined' && document.hidden && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification(restaurant?.name || 'Click2Eat', { body: message })
+      }
+    } catch (e) {}
+  }
+
   useEffect(() => {
     if (!orderId || !showSuccess) return
+    let prevStatus = 'NEW'
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/orders/status?orderId=${orderId}`)
         const data = await res.json()
-        if (data.status) setOrderStatus(data.status)
+        if (data.status && data.status !== prevStatus) {
+          prevStatus = data.status
+          setOrderStatus(data.status)
+          notifyStatusChange(data.status)
+        }
       } catch {
         // network hiccup, will retry on the next tick
       }
@@ -235,6 +295,13 @@ export default function MenuClientPage() {
       )
       return
     }
+    // Débloque le son pour les notifications de suivi, pendant qu'on est encore
+    // dans le geste de clic du client (les navigateurs mobiles l'exigent).
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+      }
+    } catch (e) {}
     setSending(true)
     setOrderError('')
     try {
@@ -370,7 +437,17 @@ export default function MenuClientPage() {
         .slide-up-3 { animation: slideUp 0.5s ease-out 0.7s forwards; opacity: 0; }
         .spin-slow { animation: spinSlow 8s linear infinite; }
         .pulse-anim { animation: pulseAnim 2s ease-in-out infinite; }
+        @keyframes toastSlide { 0% { transform: translateY(-20px); opacity: 0; } 15% { transform: translateY(0); opacity: 1; } 85% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-20px); opacity: 0; } }
+        .toast-slide { animation: toastSlide 4s ease-in-out forwards; }
       `}</style>
+
+      {statusToast && (
+        <div className="fixed top-4 inset-x-4 z-[70] flex justify-center pointer-events-none">
+          <div className="toast-slide px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold text-center" style={{ backgroundColor: 'var(--accent)', color: 'var(--button-text)' }}>
+            {statusToast}
+          </div>
+        </div>
+      )}
 
       <div className="text-center w-full max-w-sm">
         <div className="relative w-36 h-36 mx-auto mb-8">
