@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 import { getSession } from '@/app/lib/auth'
+import { sendPushForOrder } from '@/app/lib/push'
 
 export async function PATCH(
   req: NextRequest,
@@ -17,6 +18,9 @@ export async function PATCH(
       where: { id },
       data: { status },
     })
+
+    // Notification push best-effort : ne doit jamais faire échouer la mise à jour du statut
+    sendPushForOrder(id, status).catch(() => {})
 
     return Response.json(order)
   } catch (error) {

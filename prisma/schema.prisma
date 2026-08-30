@@ -145,6 +145,7 @@ model Order {
   restaurant    Restaurant  @relation(fields: [restaurantId], references: [id])
   table         Table       @relation(fields: [tableId], references: [id])
   items         OrderItem[]
+  pushSubscriptions PushSubscription[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -171,4 +172,16 @@ model WaiterCall {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   table        Table      @relation(fields: [tableId], references: [id])
   createdAt    DateTime   @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  orderId   String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  lang      String   @default("he")
+  pageUrl   String?
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id])
 }

@@ -115,6 +115,19 @@ export default function MenuClientPage() {
   const [isPreview, setIsPreview] = useState(false)
   const [statusToast, setStatusToast] = useState<string | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
+  const [pushSupported, setPushSupported] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushBusy, setPushBusy] = useState(false)
+  const [pushMsg, setPushMsg] = useState('')
+
+  // Détecte si ce navigateur peut techniquement recevoir de vraies notifications push
+  // (fonctionne sur Android/Chrome et ordinateur ; sur iPhone, Safari a besoin en plus
+  // que le site soit ajouté à l'écran d'accueil, donc l'activation échouera proprement).
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+      setPushSupported(true)
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -225,6 +238,57 @@ export default function MenuClientPage() {
         new Notification(restaurant?.name || 'Click2Eat', { body: message })
       }
     } catch (e) {}
+  }
+
+  // Convertit la clé publique VAPID (format texte) au format attendu par le navigateur pour s'abonner au push
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const rawData = window.atob(base64)
+    const outputArray = new Uint8Array(rawData.length)
+    for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i)
+    return outputArray
+  }
+
+  // Active les vraies notifications push (arrivent même téléphone verrouillé / onglet fermé).
+  // Doit être déclenché par un clic du client (obligatoire pour la demande de permission).
+  const enablePush = async () => {
+    if (!orderId || pushBusy || pushEnabled) return
+    setPushBusy(true)
+    setPushMsg('')
+    try {
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidKey) throw new Error('missing vapid key')
+      const registration = await navigator.serviceWorker.register('/sw.js')
+      await navigator.serviceWorker.ready
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') {
+        setPushMsg(
+          lang === 'he' ? 'לא אישרת התראות' :
+          lang === 'fr' ? 'Permission refusée' :
+          'Permission denied'
+        )
+        return
+      }
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      })
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, subscription: subscription.toJSON(), lang, pageUrl: window.location.href }),
+      })
+      setPushEnabled(true)
+    } catch (e) {
+      setPushMsg(
+        lang === 'he' ? 'ההתראות אינן זמינות בדפדפן הזה' :
+        lang === 'fr' ? 'Notifications indisponibles sur ce navigateur' :
+        'Notifications unavailable on this browser'
+      )
+    } finally {
+      setPushBusy(false)
+    }
   }
 
   useEffect(() => {
@@ -521,6 +585,31 @@ export default function MenuClientPage() {
             {orderStatus === 'DONE' && <p className="text-green-400 text-xs">{lang === 'he' ? '✓ תיאבון!' : lang === 'fr' ? '✓ Bon appétit !' : '✓ Enjoy your meal!'}</p>}
           </div>
         </div>
+
+        {pushSupported && !isPreview && (
+          <div className="mb-4 slide-up-3">
+            <button
+              onClick={enablePush}
+              disabled={pushBusy || pushEnabled}
+              className={`w-full border px-4 py-3 text-xs tracking-widest transition-all ${R.md} flex items-center justify-center gap-2 disabled:opacity-70`}
+              style={{
+                borderColor: 'var(--accent)',
+                color: pushEnabled ? 'var(--button-text)' : 'var(--accent)',
+                backgroundColor: pushEnabled ? 'var(--accent)' : 'transparent',
+              }}
+            >
+              <span>🔔</span>
+              <span>
+                {pushEnabled
+                  ? (lang === 'he' ? 'התראות פעילות' : lang === 'fr' ? 'Notifications activées' : 'Notifications enabled')
+                  : pushBusy
+                  ? (lang === 'he' ? 'מפעיל...' : lang === 'fr' ? 'Activation...' : 'Enabling...')
+                  : (lang === 'he' ? 'קבל התראה גם כשהאפליקציה סגורה' : lang === 'fr' ? 'Être alerté même appli fermée' : 'Get notified even with the app closed')}
+              </span>
+            </button>
+            {pushMsg && <p className={`text-xs text-center mt-2 ${T.muted}`}>{pushMsg}</p>}
+          </div>
+        )}
 
         <button
           onClick={() => { setShowSuccess(false); setOrderId(null); setOrderStatus('NEW') }}
