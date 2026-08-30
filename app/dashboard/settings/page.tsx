@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const FONT_OPTIONS = [
   { value: 'SERIF', label: 'קלאסי (Serif)', sample: 'Aa', style: { fontFamily: 'Georgia, serif' } },
@@ -42,6 +42,9 @@ const COLOR_FIELDS = [
   { key: 'buttonTextColor', label: 'טקסט על כפתורים' },
 ]
 
+// Table factice utilisée uniquement pour afficher l'aperçu (aucune commande réelle n'est possible ici)
+const PREVIEW_TABLE_ID = 'apercu'
+
 export default function SettingsPage() {
   const [form, setForm] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -49,6 +52,22 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [showMobilePreview, setShowMobilePreview] = useState(false)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [previewReady, setPreviewReady] = useState(false)
+
+  const sendPreviewUpdate = (data: any) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'CLICK2EAT_PREVIEW_UPDATE', data },
+      window.location.origin
+    )
+  }
+
+  // Diffuse chaque changement de réglage vers l'aperçu, en direct
+  useEffect(() => {
+    if (!form || !previewReady) return
+    sendPreviewUpdate(form)
+  }, [form, previewReady])
 
   const fetchRestaurant = async () => {
     setLoadError('')
@@ -111,7 +130,8 @@ export default function SettingsPage() {
         <h2 className="text-2xl font-bold">עיצוב ומיתוג</h2>
       </div>
 
-      <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-6 max-w-2xl">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-6 max-w-2xl flex-1 min-w-0">
         <div>
           <label className="block text-gray-400 text-sm mb-2">שם המסעדה (מוצג ללקוחות)</label>
           <input
@@ -398,6 +418,36 @@ export default function SettingsPage() {
           {saving ? 'שומר...' : 'שמור שינויים'}
         </button>
       </div>
+
+      <div className={showMobilePreview ? 'fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4' : 'hidden lg:flex lg:flex-col lg:items-center lg:sticky lg:top-6'}>
+        {showMobilePreview && (
+          <button
+            onClick={() => setShowMobilePreview(false)}
+            className="lg:hidden absolute top-4 left-4 text-white text-sm border border-gray-600 rounded-full px-4 py-2 z-10"
+          >
+            ✕ סגור
+          </button>
+        )}
+        <div className="bg-black rounded-[2.5rem] border-4 border-gray-800 overflow-hidden shadow-2xl" style={{ width: '300px', height: '620px' }}>
+          <iframe
+            ref={iframeRef}
+            src={`/menu/${form.slug || ''}/apercu?preview=1`}
+            onLoad={() => { setPreviewReady(true); sendPreviewUpdate(form) }}
+            className="w-full h-full border-0"
+            title="תצוגה מקדימה"
+          />
+        </div>
+        <p className="text-gray-500 text-xs mt-2 hidden lg:block">👁️ תצוגה מקדימה חיה — כל שינוי מוצג מיד</p>
+      </div>
+      </div>
+
+      <button
+        onClick={() => setShowMobilePreview(true)}
+        className="lg:hidden fixed bottom-6 left-6 z-40 bg-orange-500 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-xl text-xl"
+        title="תצוגה מקדימה"
+      >
+        👁️
+      </button>
     </div>
   )
 }

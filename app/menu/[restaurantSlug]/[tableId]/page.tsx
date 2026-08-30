@@ -77,6 +77,16 @@ const FacebookIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
+// Champs que la page des réglages du restaurateur est autorisée à mettre à jour
+// en direct dans l'aperçu (jamais l'id, le slug ou les catégories/produits).
+const PREVIEW_OVERRIDE_KEYS = [
+  'name', 'tagline', 'theme', 'fontStyle', 'layoutStyle', 'cornerStyle', 'logo', 'coverImage',
+  'primaryColor', 'bgColor', 'textColor', 'cardBgColor', 'cardBorderColor', 'buttonTextColor',
+  'showWaiterCall', 'showSearch', 'showFeatured',
+  'welcomeMessageHe', 'welcomeMessageEn', 'welcomeMessageFr',
+  'instagramUrl', 'facebookUrl', 'openingHours', 'defaultLanguage',
+]
+
 export default function MenuClientPage() {
   const params = useParams()
   const restaurantSlug = params.restaurantSlug as string
@@ -102,6 +112,33 @@ export default function MenuClientPage() {
   const [waiterCallSent, setWaiterCallSent] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'default' | 'asc' | 'desc'>('default')
+  const [isPreview, setIsPreview] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsPreview(new URLSearchParams(window.location.search).get('preview') === '1')
+    }
+  }, [])
+
+  // Aperçu en direct : le tableau de bord du restaurateur envoie ses changements
+  // de réglages ici via postMessage, pour un affichage instantané sans sauvegarde.
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return
+      if (e.data?.type !== 'CLICK2EAT_PREVIEW_UPDATE') return
+      const incoming = e.data.data || {}
+      setRestaurant((prev: any) => {
+        if (!prev) return prev
+        const patch: any = {}
+        for (const key of PREVIEW_OVERRIDE_KEYS) {
+          if (key in incoming) patch[key] = incoming[key]
+        }
+        return { ...prev, ...patch }
+      })
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
 
   useEffect(() => {
     fetch(`/api/menu/${restaurantSlug}`)
@@ -172,6 +209,14 @@ export default function MenuClientPage() {
 
   const placeOrder = async () => {
     if (cart.length === 0) return
+    if (isPreview) {
+      setOrderError(
+        lang === 'he' ? 'מצב תצוגה מקדימה — ההזמנה אינה נשלחת' :
+        lang === 'fr' ? "Mode aperçu — la commande n'est pas envoyée" :
+        'Preview mode — orders are not sent'
+      )
+      return
+    }
     setSending(true)
     setOrderError('')
     try {
@@ -204,6 +249,11 @@ export default function MenuClientPage() {
 
   const callWaiter = async () => {
     if (waiterCallSent || waiterCallLoading || !restaurant?.id) return
+    if (isPreview) {
+      setWaiterCallSent(true)
+      setTimeout(() => setWaiterCallSent(false), 3000)
+      return
+    }
     setWaiterCallLoading(true)
     try {
       await fetch('/api/waiter-call', {
@@ -422,6 +472,12 @@ export default function MenuClientPage() {
 
   return (
     <div className={`min-h-screen ${fontClass} relative`} style={{ ...cssVars, ...fontStyle, backgroundColor: 'var(--bg)', color: 'var(--text)' }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+
+      {isPreview && (
+        <div className="sticky top-0 z-[60] text-center text-[10px] tracking-widest py-1" style={{ backgroundColor: 'var(--accent)', color: 'var(--button-text)' }}>
+          {lang === 'he' ? 'תצוגה מקדימה' : lang === 'fr' ? 'APERÇU' : 'PREVIEW'}
+        </div>
+      )}
 
       {!restaurant.coverImage && (
         <div className={`fixed inset-0 flex items-center justify-center pointer-events-none z-0 ${T.watermarkOpacity}`}>
