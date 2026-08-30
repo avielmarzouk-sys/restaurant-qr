@@ -45,6 +45,11 @@ const COLOR_FIELDS = [
 // Table factice utilisée uniquement pour afficher l'aperçu (aucune commande réelle n'est possible ici)
 const PREVIEW_TABLE_ID = 'apercu'
 
+// Dimensions utilisées pour calculer la miniature "vue globale" (le site entier, réduit pour tenir dans le cadre)
+const PREVIEW_NATIVE_WIDTH = 390
+const PREVIEW_TARGET_HEIGHT = 700
+const PREVIEW_MAX_WIDTH = 340
+
 export default function SettingsPage() {
   const [form, setForm] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -53,6 +58,8 @@ export default function SettingsPage() {
   const [saveError, setSaveError] = useState('')
   const [saved, setSaved] = useState(false)
   const [showMobilePreview, setShowMobilePreview] = useState(false)
+  const [previewMode, setPreviewMode] = useState<'full' | 'actual'>('full')
+  const [previewHeight, setPreviewHeight] = useState(1500)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [previewReady, setPreviewReady] = useState(false)
 
@@ -68,6 +75,18 @@ export default function SettingsPage() {
     if (!form || !previewReady) return
     sendPreviewUpdate(form)
   }, [form, previewReady])
+
+  // Reçoit la hauteur réelle du site depuis l'aperçu, pour l'afficher dans sa globalité
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return
+      if (e.data?.type === 'CLICK2EAT_PREVIEW_HEIGHT' && typeof e.data.height === 'number') {
+        setPreviewHeight(e.data.height)
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
 
   const fetchRestaurant = async () => {
     setLoadError('')
@@ -123,6 +142,14 @@ export default function SettingsPage() {
   if (!form) return null
 
   const themeDefaults = getThemeDefaults(form.theme || 'DARK')
+
+  // "vue globale" : on réduit le site (largeur + hauteur réelles) pour qu'il tienne entièrement dans le cadre, sans découpage
+  const fullScale = Math.max(
+    0.12,
+    Math.min(PREVIEW_TARGET_HEIGHT / Math.max(previewHeight, 1), PREVIEW_MAX_WIDTH / PREVIEW_NATIVE_WIDTH, 1)
+  )
+  const frameWidth = previewMode === 'full' ? Math.round(PREVIEW_NATIVE_WIDTH * fullScale) : 300
+  const frameHeight = previewMode === 'full' ? Math.round(previewHeight * fullScale) : 620
 
   return (
     <div dir="rtl">
@@ -428,16 +455,36 @@ export default function SettingsPage() {
             ✕ סגור
           </button>
         )}
-        <div className="bg-black rounded-[2.5rem] border-4 border-gray-800 overflow-hidden shadow-2xl" style={{ width: '300px', height: '620px' }}>
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setPreviewMode('full')}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${previewMode === 'full' ? 'border-orange-500 bg-orange-500/10 text-orange-400' : 'border-gray-700 text-gray-400'}`}
+          >
+            תצוגה מלאה
+          </button>
+          <button
+            onClick={() => setPreviewMode('actual')}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${previewMode === 'actual' ? 'border-orange-500 bg-orange-500/10 text-orange-400' : 'border-gray-700 text-gray-400'}`}
+          >
+            גודל אמיתי (גלילה)
+          </button>
+        </div>
+        <div className="bg-black rounded-[2.5rem] border-4 border-gray-800 overflow-hidden shadow-2xl" style={{ width: frameWidth, height: frameHeight }}>
           <iframe
             ref={iframeRef}
             src={`/menu/${form.slug || ''}/apercu?preview=1`}
             onLoad={() => { setPreviewReady(true); sendPreviewUpdate(form) }}
-            className="w-full h-full border-0"
+            style={
+              previewMode === 'full'
+                ? { width: PREVIEW_NATIVE_WIDTH, height: previewHeight, transform: `scale(${fullScale})`, transformOrigin: 'top left', border: 0 }
+                : { width: '100%', height: '100%', border: 0 }
+            }
             title="תצוגה מקדימה"
           />
         </div>
-        <p className="text-gray-500 text-xs mt-2 hidden lg:block">👁️ תצוגה מקדימה חיה — כל שינוי מוצג מיד</p>
+        <p className="text-gray-500 text-xs mt-2 hidden lg:block">
+          {previewMode === 'full' ? '👁️ האתר כולו, בזמן אמת' : '👁️ גלילה בגודל אמיתי, בזמן אמת'}
+        </p>
       </div>
       </div>
 

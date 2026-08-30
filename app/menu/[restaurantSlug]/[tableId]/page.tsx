@@ -120,6 +120,24 @@ export default function MenuClientPage() {
     }
   }, [])
 
+  // En mode aperçu, on informe la page des réglages de la hauteur réelle du contenu
+  // pour qu'elle puisse afficher le site dans sa globalité, sans le découper.
+  useEffect(() => {
+    if (!isPreview || typeof window === 'undefined') return
+    const sendHeight = () => {
+      const h = document.documentElement.scrollHeight
+      window.parent.postMessage({ type: 'CLICK2EAT_PREVIEW_HEIGHT', height: h }, window.location.origin)
+    }
+    sendHeight()
+    const observer = new ResizeObserver(sendHeight)
+    observer.observe(document.documentElement)
+    window.addEventListener('load', sendHeight)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('load', sendHeight)
+    }
+  }, [isPreview])
+
   // Aperçu en direct : le tableau de bord du restaurateur envoie ses changements
   // de réglages ici via postMessage, pour un affichage instantané sans sauvegarde.
   useEffect(() => {
