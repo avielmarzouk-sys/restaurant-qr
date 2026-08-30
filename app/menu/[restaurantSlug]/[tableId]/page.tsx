@@ -50,9 +50,13 @@ const FONT_CLASS: any = {
   SERIF: 'font-serif',
   SANS: 'font-sans',
   ROUNDED: '',
+  ELEGANT: '',
+  BOLD: '',
 }
 const FONT_STYLE: any = {
   ROUNDED: { fontFamily: 'ui-rounded, "Segoe UI Rounded", system-ui, sans-serif' },
+  ELEGANT: { fontFamily: 'Didot, "Bodoni MT", Georgia, serif' },
+  BOLD: { fontFamily: '"Arial Black", Impact, sans-serif' },
 }
 
 const RADIUS = {
@@ -129,7 +133,7 @@ export default function MenuClientPage() {
   }, [orderId, showSuccess])
 
   useEffect(() => {
-    if (!restaurantSlug) return
+    if (!restaurantSlug || restaurant?.showWaitTime === false) return
     const fetchWaitTime = () => {
       fetch(`/api/wait-time/${restaurantSlug}`)
         .then(r => r.json())
@@ -143,7 +147,7 @@ export default function MenuClientPage() {
     fetchWaitTime()
     const interval = setInterval(fetchWaitTime, 30000)
     return () => clearInterval(interval)
-  }, [restaurantSlug])
+  }, [restaurantSlug, restaurant?.id, restaurant?.showWaitTime])
 
   const getName = (item: any) => {
     if (lang === 'fr') return item.nameFr || item.nameEn || item.nameHe
@@ -238,11 +242,34 @@ export default function MenuClientPage() {
   const T = THEME[themeKey]
   const cornerKey = restaurant?.cornerStyle === 'SHARP' ? 'SHARP' : 'ROUNDED'
   const R = RADIUS[cornerKey]
-  const layout = restaurant?.layoutStyle === 'GRID' || restaurant?.layoutStyle === 'MAGAZINE' ? restaurant.layoutStyle : 'COMPACT'
+  const layout = ['GRID', 'MAGAZINE', 'MINIMAL'].includes(restaurant?.layoutStyle) ? restaurant.layoutStyle : 'COMPACT'
   const accent = restaurant?.primaryColor || '#B8860B'
   const fontClass = FONT_CLASS[restaurant?.fontStyle] || 'font-serif'
   const fontStyle = FONT_STYLE[restaurant?.fontStyle] || {}
-  const cssVars = { '--accent': accent } as CSSProperties
+
+  // Couleurs avancées : la valeur choisie par le restaurateur prime, sinon on retombe sur le thème clair/sombre par défaut
+  const themeDefaultColors = themeKey === 'LIGHT'
+    ? { bg: '#ffffff', text: '#18181b', cardBg: '#f9fafb', cardBorder: '#e5e7eb', buttonText: '#000000' }
+    : { bg: '#09090b', text: '#ffffff', cardBg: '#18181b', cardBorder: '#27272a', buttonText: '#000000' }
+  const pageBg = restaurant?.bgColor || themeDefaultColors.bg
+  const pageText = restaurant?.textColor || themeDefaultColors.text
+  const cardBg = restaurant?.cardBgColor || themeDefaultColors.cardBg
+  const cardBorderColor = restaurant?.cardBorderColor || themeDefaultColors.cardBorder
+  const buttonTextColor = restaurant?.buttonTextColor || themeDefaultColors.buttonText
+
+  const cssVars = {
+    '--accent': accent,
+    '--bg': pageBg,
+    '--text': pageText,
+    '--card-bg': cardBg,
+    '--card-border': cardBorderColor,
+    '--button-text': buttonTextColor,
+  } as CSSProperties
+
+  const welcomeMessage =
+    lang === 'he' ? restaurant?.welcomeMessageHe :
+    lang === 'fr' ? restaurant?.welcomeMessageFr :
+    restaurant?.welcomeMessageEn
 
   if (loading) return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
@@ -257,7 +284,7 @@ export default function MenuClientPage() {
   )
 
   if (sending) return (
-    <div className={`min-h-screen ${T.bg} ${T.text} flex items-center justify-center`} style={cssVars} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen flex items-center justify-center" style={{ ...cssVars, backgroundColor: 'var(--bg)', color: 'var(--text)' }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
       <style>{`
         @keyframes spinRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pulseText { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -281,7 +308,7 @@ export default function MenuClientPage() {
   )
 
   if (showSuccess) return (
-    <div className={`min-h-screen ${T.bg} ${T.text} flex items-center justify-center p-6`} style={cssVars} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ ...cssVars, backgroundColor: 'var(--bg)', color: 'var(--text)' }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
       <style>{`
         @keyframes scaleIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -336,14 +363,14 @@ export default function MenuClientPage() {
           </p>
           <div className="flex items-center justify-between">
             <div className="flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 ${R.full} flex items-center justify-center text-black font-bold`} style={{ backgroundColor: 'var(--accent)' }}>✓</div>
+              <div className={`w-10 h-10 ${R.full} flex items-center justify-center font-bold`} style={{ backgroundColor: 'var(--accent)', color: 'var(--button-text)' }}>✓</div>
               <span className="text-xs" style={{ color: 'var(--accent)' }}>{lang === 'he' ? 'התקבל' : lang === 'fr' ? 'Reçu' : 'Received'}</span>
             </div>
             <div className={`flex-1 h-px mx-2 transition-all duration-500 ${['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? '' : T.dividerBg}`} style={{ backgroundColor: ['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'var(--accent)' : undefined }}></div>
             <div className="flex flex-col items-center gap-2">
               <div
-                className={`w-10 h-10 ${R.full} flex items-center justify-center transition-all duration-500 ${['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'text-black font-bold' : `border ${T.mutedBorder} text-zinc-500`}`}
-                style={['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? { backgroundColor: 'var(--accent)' } : {}}
+                className={`w-10 h-10 ${R.full} flex items-center justify-center transition-all duration-500 ${['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'font-bold' : `border ${T.mutedBorder} text-zinc-500`}`}
+                style={['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? { backgroundColor: 'var(--accent)', color: 'var(--button-text)' } : {}}
               >
                 {['ACCEPTED', 'PREPARING', 'READY', 'DONE'].includes(orderStatus) ? '✓' : '2'}
               </div>
@@ -352,8 +379,8 @@ export default function MenuClientPage() {
             <div className={`flex-1 h-px mx-2 transition-all duration-500 ${['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? '' : T.dividerBg}`} style={{ backgroundColor: ['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'var(--accent)' : undefined }}></div>
             <div className="flex flex-col items-center gap-2">
               <div
-                className={`w-10 h-10 ${R.full} flex items-center justify-center transition-all duration-500 ${['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'text-black pulse-anim' : `border ${T.mutedBorder} text-zinc-500`}`}
-                style={['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? { backgroundColor: 'var(--accent)' } : {}}
+                className={`w-10 h-10 ${R.full} flex items-center justify-center transition-all duration-500 ${['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? 'pulse-anim' : `border ${T.mutedBorder} text-zinc-500`}`}
+                style={['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? { backgroundColor: 'var(--accent)', color: 'var(--button-text)' } : {}}
               >
                 {['PREPARING', 'READY', 'DONE'].includes(orderStatus) ? '🔥' : '3'}
               </div>
@@ -421,7 +448,7 @@ export default function MenuClientPage() {
   }
 
   return (
-    <div className={`min-h-screen ${T.bg} ${T.text} ${fontClass} relative`} style={{ ...cssVars, ...fontStyle }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+    <div className={`min-h-screen ${fontClass} relative`} style={{ ...cssVars, ...fontStyle, backgroundColor: 'var(--bg)', color: 'var(--text)' }} dir={lang === 'he' ? 'rtl' : 'ltr'}>
 
       {!restaurant.coverImage && (
         <div className={`fixed inset-0 flex items-center justify-center pointer-events-none z-0 ${T.watermarkOpacity}`}>
@@ -454,19 +481,21 @@ export default function MenuClientPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={callWaiter}
-              disabled={waiterCallSent || waiterCallLoading}
-              className={`text-xs px-3 py-2 ${R.full} border transition-all flex items-center gap-1 disabled:opacity-70`}
-              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
-            >
-              <span>🛎️</span>
-              <span className="hidden sm:inline">
-                {waiterCallSent
-                  ? (lang === 'he' ? 'נשלח!' : lang === 'fr' ? 'Envoyé !' : 'Sent!')
-                  : (lang === 'he' ? 'קרא למלצר' : lang === 'fr' ? 'Appeler le serveur' : 'Call waiter')}
-              </span>
-            </button>
+            {restaurant.showWaiterCall !== false && (
+              <button
+                onClick={callWaiter}
+                disabled={waiterCallSent || waiterCallLoading}
+                className={`text-xs px-3 py-2 ${R.full} border transition-all flex items-center gap-1 disabled:opacity-70`}
+                style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+              >
+                <span>🛎️</span>
+                <span className="hidden sm:inline">
+                  {waiterCallSent
+                    ? (lang === 'he' ? 'נשלח!' : lang === 'fr' ? 'Envoyé !' : 'Sent!')
+                    : (lang === 'he' ? 'קרא למלצר' : lang === 'fr' ? 'Appeler le serveur' : 'Call waiter')}
+                </span>
+              </button>
+            )}
             <div className="flex gap-1">
               {(['he', 'en', 'fr'] as const).map((l) => (
                 <button
@@ -480,7 +509,7 @@ export default function MenuClientPage() {
               ))}
             </div>
             {cart.length > 0 && (
-              <button onClick={() => setShowCart(true)} className={`text-black px-4 py-2 ${R.full} flex items-center gap-2 font-bold text-sm`} style={{ backgroundColor: 'var(--accent)' }}>
+              <button onClick={() => setShowCart(true)} className={`px-4 py-2 ${R.full} flex items-center gap-2 font-bold text-sm`} style={{ backgroundColor: 'var(--accent)', color: 'var(--button-text)' }}>
                 <span>🛒</span>
                 <span>{totalItems}</span>
                 <span>{totalAmount}₪</span>
@@ -489,7 +518,11 @@ export default function MenuClientPage() {
           </div>
         </div>
 
-        {waitTime !== null && (
+        {welcomeMessage && (
+          <p className={`text-sm mt-2 ${T.muted}`}>{welcomeMessage}</p>
+        )}
+
+        {restaurant.showWaitTime !== false && waitTime !== null && (
           <div className="flex items-center gap-1 mt-2">
             <span className="text-xs" style={{ color: 'var(--accent)' }}>⏱️</span>
             <span className={`text-xs ${T.muted}`}>
@@ -521,7 +554,7 @@ export default function MenuClientPage() {
         )}
       </div>
 
-      {!isSearching && featuredProducts.length > 0 && (
+      {restaurant.showFeatured !== false && !isSearching && featuredProducts.length > 0 && (
         <div className={`${T.headerBg} border-b ${T.headerBorder} px-4 py-4 relative z-10`}>
           <p className="text-xs tracking-widest mb-3 flex items-center gap-2" style={{ color: 'var(--accent)' }}>
             <span>⭐</span>
@@ -532,7 +565,8 @@ export default function MenuClientPage() {
               <div
                 key={product.id}
                 onClick={() => openProductFromCard(product)}
-                className={`flex-shrink-0 w-36 ${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer ${R.lg} overflow-hidden`}
+                className={`flex-shrink-0 w-36 border ${T.cardHoverBorder} transition-all cursor-pointer ${R.lg} overflow-hidden`}
+                style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
               >
                 <div className="w-full h-24 overflow-hidden">
                   {product.image ? (
@@ -556,38 +590,40 @@ export default function MenuClientPage() {
           <button
             key={cat.id}
             onClick={() => { setSelectedCategory(cat.id); setSearchQuery('') }}
-            className={`flex-shrink-0 px-5 py-2 text-sm tracking-widest transition-all ${R.md} ${!isSearching && selectedCategory === cat.id ? 'text-black font-bold' : `border ${T.mutedBorder} ${T.muted}`}`}
-            style={!isSearching && selectedCategory === cat.id ? { backgroundColor: 'var(--accent)' } : {}}
+            className={`flex-shrink-0 px-5 py-2 text-sm tracking-widest transition-all ${R.md} ${!isSearching && selectedCategory === cat.id ? 'font-bold' : `border ${T.mutedBorder} ${T.muted}`}`}
+            style={!isSearching && selectedCategory === cat.id ? { backgroundColor: 'var(--accent)', color: 'var(--button-text)' } : {}}
           >
             {getName(cat).toUpperCase()}
           </button>
         ))}
       </div>
 
-      <div className={`${T.headerBg} border-b ${T.headerBorder} px-4 py-3 flex gap-2 relative z-10`}>
-        <div className={`flex-1 flex items-center gap-2 ${T.inputBg} border ${T.inputBorder} px-3 ${R.md}`}>
-          <span className={T.muted}>🔍</span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={lang === 'he' ? 'חיפוש מנה...' : lang === 'fr' ? 'Rechercher un plat...' : 'Search a dish...'}
-            className={`flex-1 bg-transparent ${T.text} py-2 text-sm outline-none`}
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className={T.muted}>×</button>
-          )}
+      {restaurant.showSearch !== false && (
+        <div className={`${T.headerBg} border-b ${T.headerBorder} px-4 py-3 flex gap-2 relative z-10`}>
+          <div className={`flex-1 flex items-center gap-2 ${T.inputBg} border ${T.inputBorder} px-3 ${R.md}`}>
+            <span className={T.muted}>🔍</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={lang === 'he' ? 'חיפוש מנה...' : lang === 'fr' ? 'Rechercher un plat...' : 'Search a dish...'}
+              className={`flex-1 bg-transparent ${T.text} py-2 text-sm outline-none`}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className={T.muted}>×</button>
+            )}
+          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'default' | 'asc' | 'desc')}
+            className={`${T.inputBg} border ${T.inputBorder} ${T.text} text-xs px-2 ${R.md} outline-none`}
+          >
+            <option value="default">{lang === 'he' ? 'מיון' : lang === 'fr' ? 'Trier' : 'Sort'}</option>
+            <option value="asc">{lang === 'he' ? 'מחיר: נמוך לגבוה' : lang === 'fr' ? 'Prix croissant' : 'Price: low to high'}</option>
+            <option value="desc">{lang === 'he' ? 'מחיר: גבוה לנמוך' : lang === 'fr' ? 'Prix décroissant' : 'Price: high to low'}</option>
+          </select>
         </div>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as 'default' | 'asc' | 'desc')}
-          className={`${T.inputBg} border ${T.inputBorder} ${T.text} text-xs px-2 ${R.md} outline-none`}
-        >
-          <option value="default">{lang === 'he' ? 'מיון' : lang === 'fr' ? 'Trier' : 'Sort'}</option>
-          <option value="asc">{lang === 'he' ? 'מחיר: נמוך לגבוה' : lang === 'fr' ? 'Prix croissant' : 'Price: low to high'}</option>
-          <option value="desc">{lang === 'he' ? 'מחיר: גבוה לנמוך' : lang === 'fr' ? 'Prix décroissant' : 'Price: high to low'}</option>
-        </select>
-      </div>
+      )}
 
       <div className="p-4 pb-32 relative z-10">
         {isSearching && (
@@ -597,7 +633,7 @@ export default function MenuClientPage() {
               : (lang === 'he' ? `${productsToShow.length} תוצאות` : lang === 'fr' ? `${productsToShow.length} résultat(s)` : `${productsToShow.length} result(s)`)}
           </p>
         )}
-        <div className={layout === 'GRID' ? 'grid grid-cols-2 gap-3' : 'space-y-3'}>
+        <div className={layout === 'GRID' ? 'grid grid-cols-2 gap-3' : layout === 'MINIMAL' ? '' : 'space-y-3'}>
           {productsToShow.map((product: any) => {
             const openProduct = () => { setSelectedProduct(product); setProductOptions({ removed: [], added: [] }); setQuantity(1) }
 
@@ -606,7 +642,8 @@ export default function MenuClientPage() {
                 <div
                   key={product.id}
                   onClick={openProduct}
-                  className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden relative`}
+                  className={`border ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden relative`}
+                  style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
                 >
                   {product.isFeatured && (
                     <span className="absolute top-2 right-2 z-10 text-xs bg-yellow-400 text-black px-1.5 py-0.5 rounded-full font-bold">⭐</span>
@@ -634,7 +671,8 @@ export default function MenuClientPage() {
                 <div
                   key={product.id}
                   onClick={openProduct}
-                  className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden mb-4 relative`}
+                  className={`border ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden mb-4 relative`}
+                  style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
                 >
                   {product.isFeatured && (
                     <span className="absolute top-2 right-2 z-10 text-xs bg-yellow-400 text-black px-1.5 py-0.5 rounded-full font-bold">⭐</span>
@@ -660,11 +698,38 @@ export default function MenuClientPage() {
               )
             }
 
+            if (layout === 'MINIMAL') {
+              return (
+                <div
+                  key={product.id}
+                  onClick={openProduct}
+                  className={`flex items-center gap-3 py-3 border-b ${T.divider} cursor-pointer`}
+                >
+                  {product.image ? (
+                    <img src={product.image} className={`w-12 h-12 object-cover flex-shrink-0 ${R.full}`} />
+                  ) : (
+                    <div className={`w-12 h-12 flex items-center justify-center text-lg flex-shrink-0 ${R.full}`} style={{ backgroundColor: 'var(--card-bg)' }}>🍽️</div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    {isSearching && product.categoryName && (
+                      <p className="text-[9px] tracking-widest mb-0.5" style={{ color: 'var(--accent)', opacity: 0.7 }}>{product.categoryName.toUpperCase()}</p>
+                    )}
+                    <h3 className="font-bold text-sm flex items-center gap-1.5 truncate">
+                      {product.isFeatured && <span className="text-xs">⭐</span>}
+                      {getName(product)}
+                    </h3>
+                  </div>
+                  <span className="font-bold text-sm flex-shrink-0" style={{ color: 'var(--accent)' }}>{product.price}₪</span>
+                </div>
+              )
+            }
+
             return (
               <div
                 key={product.id}
                 onClick={openProduct}
-                className={`${T.cardBg} border ${T.cardBorder} ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden`}
+                className={`border ${T.cardHoverBorder} transition-all cursor-pointer group ${R.lg} overflow-hidden`}
+                style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
               >
                 <div className="flex gap-4 p-4">
                   <div className="flex-1 min-w-0">
@@ -704,7 +769,7 @@ export default function MenuClientPage() {
 
       {cart.length > 0 && (
         <div className="fixed bottom-6 left-4 right-4 z-40">
-          <button onClick={() => setShowCart(true)} className={`w-full text-black py-4 px-6 font-bold tracking-widest flex items-center justify-between ${R.md}`} style={{ backgroundColor: 'var(--accent)' }}>
+          <button onClick={() => setShowCart(true)} className={`w-full py-4 px-6 font-bold tracking-widest flex items-center justify-between ${R.md}`} style={{ backgroundColor: 'var(--accent)', color: 'var(--button-text)' }}>
             <div className={`bg-black/20 w-8 h-8 flex items-center justify-center text-sm font-bold ${R.sm}`}>{totalItems}</div>
             <span>{lang === 'he' ? 'צפה בסל' : lang === 'fr' ? 'VOIR LE PANIER' : 'VIEW CART'}</span>
             <span>{totalAmount}₪</span>
@@ -802,11 +867,11 @@ export default function MenuClientPage() {
                 <div className="flex items-center gap-6">
                   <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className={`w-10 h-10 border ${T.cardBorder} flex items-center justify-center text-xl transition-all ${R.md}`}>−</button>
                   <span className="font-bold text-xl w-6 text-center">{quantity}</span>
-                  <button onClick={() => setQuantity(q => q + 1)} className={`w-10 h-10 flex items-center justify-center text-xl text-black font-bold ${R.md}`} style={{ backgroundColor: 'var(--accent)' }}>+</button>
+                  <button onClick={() => setQuantity(q => q + 1)} className={`w-10 h-10 flex items-center justify-center text-xl font-bold ${R.md}`} style={{ backgroundColor: 'var(--accent)', color: 'var(--button-text)' }}>+</button>
                 </div>
               </div>
 
-              <button onClick={addToCart} className={`w-full text-black py-4 font-bold tracking-widest text-sm ${R.md}`} style={{ backgroundColor: 'var(--accent)' }}>
+              <button onClick={addToCart} className={`w-full py-4 font-bold tracking-widest text-sm ${R.md}`} style={{ backgroundColor: 'var(--accent)', color: 'var(--button-text)' }}>
                 {lang === 'he' ? 'הוסף לסל' : lang === 'fr' ? 'AJOUTER AU PANIER' : 'ADD TO CART'} — {((selectedProduct.price + productOptions.added.reduce((sum: number, o: any) => sum + o.price, 0)) * quantity).toFixed(0)}₪
               </button>
             </div>
@@ -852,7 +917,7 @@ export default function MenuClientPage() {
                   {orderError}
                 </div>
               )}
-              <button onClick={placeOrder} className={`w-full text-black py-4 font-bold tracking-widest text-sm ${R.md}`} style={{ backgroundColor: 'var(--accent)' }}>
+              <button onClick={placeOrder} className={`w-full py-4 font-bold tracking-widest text-sm ${R.md}`} style={{ backgroundColor: 'var(--accent)', color: 'var(--button-text)' }}>
                 {lang === 'he' ? 'שלח הזמנה' : lang === 'fr' ? 'ENVOYER LA COMMANDE' : 'PLACE ORDER'}
               </button>
             </div>

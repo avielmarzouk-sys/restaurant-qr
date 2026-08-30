@@ -6,17 +6,40 @@ const FONT_OPTIONS = [
   { value: 'SERIF', label: 'קלאסי (Serif)', sample: 'Aa', style: { fontFamily: 'Georgia, serif' } },
   { value: 'SANS', label: 'מודרני (Sans)', sample: 'Aa', style: { fontFamily: 'system-ui, sans-serif' } },
   { value: 'ROUNDED', label: 'ידידותי (Rounded)', sample: 'Aa', style: { fontFamily: 'ui-rounded, "Segoe UI Rounded", system-ui, sans-serif' } },
+  { value: 'ELEGANT', label: 'אלגנטי', sample: 'Aa', style: { fontFamily: 'Didot, "Bodoni MT", Georgia, serif' } },
+  { value: 'BOLD', label: 'נועז', sample: 'Aa', style: { fontFamily: '"Arial Black", Impact, sans-serif' } },
 ]
 
 const LAYOUT_OPTIONS = [
   { value: 'COMPACT', label: 'קומפקטי', desc: 'רשימה, תמונה קטנה בצד' },
   { value: 'GRID', label: 'רשת', desc: 'רשת עם תמונות גדולות' },
   { value: 'MAGAZINE', label: 'מגזין', desc: 'תמונה רחבה לכל מנה' },
+  { value: 'MINIMAL', label: 'מינימלי', desc: 'רשימה עדינה ללא מסגרות' },
 ]
 
 const CORNER_OPTIONS = [
   { value: 'ROUNDED', label: 'עגול', radius: '12px' },
   { value: 'SHARP', label: 'חד', radius: '0px' },
+]
+
+const SECTION_TOGGLES = [
+  { key: 'showWaiterCall', label: '🛎️ קריאה למלצר', desc: 'כפתור קריאת מלצר בראש התפריט' },
+  { key: 'showSearch', label: '🔍 חיפוש ומיון', desc: 'שורת חיפוש ומיון לפי מחיר' },
+  { key: 'showFeatured', label: '⭐ מומלצים', desc: 'רצועת "מומלצים על ידינו"' },
+  { key: 'showWaitTime', label: '⏱️ זמן המתנה', desc: 'תג זמן המתנה משוער' },
+]
+
+const getThemeDefaults = (theme: string) =>
+  theme === 'LIGHT'
+    ? { bgColor: '#ffffff', textColor: '#18181b', cardBgColor: '#f9fafb', cardBorderColor: '#e5e7eb', buttonTextColor: '#000000' }
+    : { bgColor: '#09090b', textColor: '#ffffff', cardBgColor: '#18181b', cardBorderColor: '#27272a', buttonTextColor: '#000000' }
+
+const COLOR_FIELDS = [
+  { key: 'bgColor', label: 'רקע הדף' },
+  { key: 'textColor', label: 'טקסט ראשי' },
+  { key: 'cardBgColor', label: 'רקע הכרטיסים (המנות)' },
+  { key: 'cardBorderColor', label: 'מסגרת הכרטיסים (המנות)' },
+  { key: 'buttonTextColor', label: 'טקסט על כפתורים' },
 ]
 
 export default function SettingsPage() {
@@ -80,6 +103,8 @@ export default function SettingsPage() {
 
   if (!form) return null
 
+  const themeDefaults = getThemeDefaults(form.theme || 'DARK')
+
   return (
     <div dir="rtl">
       <div className="flex items-center justify-between mb-6">
@@ -139,6 +164,34 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        <div className="pt-4 border-t border-gray-800">
+          <p className="text-gray-300 font-bold text-sm mb-1">🎨 צבעים מתקדמים</p>
+          <p className="text-gray-500 text-xs mb-4">שליטה מלאה על צבעי הדף. ריק = הצבע הרגיל של מצב התצוגה (כהה/בהיר) שנבחר למעלה.</p>
+          <div className="space-y-3">
+            {COLOR_FIELDS.map((field) => (
+              <div key={field.key} className="flex items-center justify-between gap-3">
+                <span className="text-gray-300 text-sm">{field.label}</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={form[field.key] || (themeDefaults as any)[field.key]}
+                    onChange={(e) => setForm((f: any) => ({ ...f, [field.key]: e.target.value }))}
+                    className="bg-gray-800 rounded-lg h-9 w-14"
+                  />
+                  {form[field.key] && (
+                    <button
+                      onClick={() => setForm((f: any) => ({ ...f, [field.key]: null }))}
+                      className="text-gray-500 hover:text-gray-300 text-xs underline"
+                    >
+                      איפוס
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div>
           <label className="block text-gray-400 text-sm mb-2">פונט</label>
           <div className="grid grid-cols-3 gap-3">
@@ -157,7 +210,7 @@ export default function SettingsPage() {
 
         <div>
           <label className="block text-gray-400 text-sm mb-2">מבנה תצוגת המנות</label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {LAYOUT_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -181,6 +234,13 @@ export default function SettingsPage() {
                     <div className="h-9 bg-gray-600 rounded"></div>
                   </div>
                 )}
+                {opt.value === 'MINIMAL' && (
+                  <div className="flex flex-col gap-1 mb-2">
+                    <div className="h-1.5 bg-gray-600 rounded w-3/4"></div>
+                    <div className="h-1.5 bg-gray-600 rounded w-1/2"></div>
+                    <div className="h-1.5 bg-gray-600 rounded w-2/3"></div>
+                  </div>
+                )}
                 <p className="text-gray-300 text-xs font-bold">{opt.label}</p>
                 <p className="text-gray-500 text-[10px]">{opt.desc}</p>
               </button>
@@ -201,6 +261,65 @@ export default function SettingsPage() {
                 <span className="text-gray-300 text-sm font-bold">{opt.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-gray-800">
+          <p className="text-gray-300 font-bold text-sm mb-1">👁️ מקטעים בתפריט הלקוח</p>
+          <p className="text-gray-500 text-xs mb-4">בחר אילו מקטעים יופיעו בעמוד ההזמנה של הלקוחות.</p>
+          <div className="grid grid-cols-2 gap-3">
+            {SECTION_TOGGLES.map((s) => {
+              const active = form[s.key] !== false
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setForm((f: any) => ({ ...f, [s.key]: !active }))}
+                  className={`rounded-xl p-3 border text-right ${active ? 'border-orange-500 bg-orange-500/10' : 'border-gray-700 bg-gray-800 opacity-60'}`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-bold text-gray-200">{s.label}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${active ? 'bg-orange-500 text-black' : 'bg-gray-700 text-gray-400'}`}>
+                      {active ? 'פעיל' : 'כבוי'}
+                    </span>
+                  </div>
+                  <p className="text-gray-500 text-[11px]">{s.desc}</p>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-gray-800">
+          <p className="text-gray-300 font-bold text-sm mb-1">💬 הודעת ברוכים הבאים (אופציונלי)</p>
+          <p className="text-gray-500 text-xs mb-4">מוצגת ללקוח מתחת לשם המסעדה. השאר ריק כדי לא להציג הודעה.</p>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-gray-500 text-xs mb-1">עברית</label>
+              <input
+                type="text"
+                value={form.welcomeMessageHe || ''}
+                onChange={(e) => setForm((f: any) => ({ ...f, welcomeMessageHe: e.target.value }))}
+                className="w-full bg-gray-800 text-white rounded-xl px-4 py-2 outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-500 text-xs mb-1">English</label>
+              <input
+                type="text"
+                value={form.welcomeMessageEn || ''}
+                onChange={(e) => setForm((f: any) => ({ ...f, welcomeMessageEn: e.target.value }))}
+                className="w-full bg-gray-800 text-white rounded-xl px-4 py-2 outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-500 text-xs mb-1">Français</label>
+              <input
+                type="text"
+                value={form.welcomeMessageFr || ''}
+                onChange={(e) => setForm((f: any) => ({ ...f, welcomeMessageFr: e.target.value }))}
+                className="w-full bg-gray-800 text-white rounded-xl px-4 py-2 outline-none text-sm"
+              />
+            </div>
           </div>
         </div>
 

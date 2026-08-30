@@ -34,6 +34,18 @@ model Restaurant {
   facebookUrl      String?
   openingHours     String?
   primaryColor     String           @default("#FF6B35")
+  bgColor          String?
+  textColor        String?
+  cardBgColor      String?
+  cardBorderColor  String?
+  buttonTextColor  String?
+  showWaiterCall   Boolean          @default(true)
+  showSearch       Boolean          @default(true)
+  showFeatured     Boolean          @default(true)
+  showWaitTime     Boolean          @default(true)
+  welcomeMessageHe String?
+  welcomeMessageEn String?
+  welcomeMessageFr String?
   defaultLanguage  String           @default("he")
   isActive         Boolean          @default(true)
   subscriptionPlan String           @default("BASIC")
