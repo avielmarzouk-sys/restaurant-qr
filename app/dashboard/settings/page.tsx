@@ -379,7 +379,7 @@ export default function SettingsPage() {
             onChange={(e) => setForm((f: any) => ({ ...f, logo: e.target.value }))}
             className="w-full bg-gray-800 text-white rounded-xl px-4 py-2 outline-none"
           />
-          {form.logo && <img src={form.logo} alt="לוגו" className="w-14 h-14 rounded-xl object-cover mt-3 border border-gray-700" />}
+          {form.logo && <img src={form.logo} alt="לוגו" loading="lazy" decoding="async" className="w-14 h-14 rounded-xl object-cover mt-3 border border-gray-700" />}
         </div>
 
         <div>
@@ -391,7 +391,7 @@ export default function SettingsPage() {
             onChange={(e) => setForm((f: any) => ({ ...f, coverImage: e.target.value }))}
             className="w-full bg-gray-800 text-white rounded-xl px-4 py-2 outline-none"
           />
-          {form.coverImage && <img src={form.coverImage} alt="באנר" className="w-full h-32 rounded-xl object-cover mt-3 border border-gray-700" />}
+          {form.coverImage && <img src={form.coverImage} alt="באנר" loading="lazy" decoding="async" className="w-full h-32 rounded-xl object-cover mt-3 border border-gray-700" />}
         </div>
 
         <div className="pt-4 border-t border-gray-800">

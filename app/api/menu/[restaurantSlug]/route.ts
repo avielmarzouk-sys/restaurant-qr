@@ -29,7 +29,11 @@ export async function GET(
       return Response.json({ error: 'Restaurant not found' }, { status: 404 })
     }
 
-    return Response.json(restaurant)
+    return Response.json(restaurant, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=300',
+      },
+    })
   } catch (error) {
     console.error(error)
     return Response.json({ error: 'Server error' }, { status: 500 })

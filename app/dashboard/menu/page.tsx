@@ -374,7 +374,7 @@ export default function MenuPage() {
                   {cat.products.map((p) => (
                     <div key={p.id} className="flex items-center gap-4 p-4">
                       {p.image ? (
-                        <img src={p.image} alt={p.nameHe} className="w-14 h-14 object-cover rounded-xl flex-shrink-0" />
+                        <img src={p.image} alt={p.nameHe} loading="lazy" decoding="async" className="w-14 h-14 object-cover rounded-xl flex-shrink-0" />
                       ) : (
                         <div className="w-14 h-14 rounded-xl bg-gray-800 flex items-center justify-center text-xl flex-shrink-0">🍽️</div>
                       )}

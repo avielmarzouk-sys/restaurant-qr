@@ -774,7 +774,7 @@ export default function MenuClientPage() {
               >
                 <div className="w-full h-24 overflow-hidden">
                   {product.image ? (
-                    <img src={product.image} className="w-full h-full object-cover" />
+                    <img src={product.image} alt={product.nameHe} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   ) : (
                     <div className={`w-full h-full flex items-center justify-center text-2xl ${T.subtleBg}`}>🍽️</div>
                   )}
@@ -854,7 +854,7 @@ export default function MenuClientPage() {
                   )}
                   <div className="aspect-square w-full overflow-hidden">
                     {product.image ? (
-                      <img src={product.image} className="w-full h-full object-cover" />
+                      <img src={product.image} alt={product.nameHe} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     ) : (
                       <div className={`w-full h-full flex items-center justify-center text-3xl ${T.subtleBg}`}>🍽️</div>
                     )}
@@ -883,7 +883,7 @@ export default function MenuClientPage() {
                   )}
                   <div className="w-full aspect-[16/9] overflow-hidden">
                     {product.image ? (
-                      <img src={product.image} className="w-full h-full object-cover" />
+                      <img src={product.image} alt={product.nameHe} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     ) : (
                       <div className={`w-full h-full flex items-center justify-center text-4xl ${T.subtleBg}`}>🍽️</div>
                     )}
@@ -910,7 +910,7 @@ export default function MenuClientPage() {
                   className={`flex items-center gap-3 py-3 border-b ${T.divider} cursor-pointer`}
                 >
                   {product.image ? (
-                    <img src={product.image} className={`w-12 h-12 object-cover flex-shrink-0 ${R.full}`} />
+                    <img src={product.image} alt={product.nameHe} loading="lazy" decoding="async" className={`w-12 h-12 object-cover flex-shrink-0 ${R.full}`} />
                   ) : (
                     <div className={`w-12 h-12 flex items-center justify-center text-lg flex-shrink-0 ${R.full}`} style={{ backgroundColor: 'var(--card-bg)' }}>🍽️</div>
                   )}
@@ -956,7 +956,7 @@ export default function MenuClientPage() {
                       </div>
                     </div>
                   </div>
-                  {product.image && <img src={product.image} className={`w-24 h-24 object-cover flex-shrink-0 ${R.md}`} />}
+                  {product.image && <img src={product.image} alt={product.nameHe} loading="lazy" decoding="async" className={`w-24 h-24 object-cover flex-shrink-0 ${R.md}`} />}
                 </div>
               </div>
             )
@@ -986,7 +986,7 @@ export default function MenuClientPage() {
           <div className={`${T.sheetBg} border-t ${T.sheetBorder} w-full max-h-[92vh] overflow-y-auto ${R.top}`} onClick={(e) => e.stopPropagation()}>
             {selectedProduct.image && (
               <div className="relative">
-                <img src={selectedProduct.image} className="w-full h-52 object-cover" />
+                <img src={selectedProduct.image} alt={selectedProduct.nameHe} decoding="async" className="w-full h-52 object-cover" />
                 <div className={`absolute inset-0 bg-gradient-to-t ${themeKey === 'LIGHT' ? 'from-white via-white/50' : 'from-zinc-950 via-zinc-950/50'} to-transparent`}></div>
                 <button onClick={() => setSelectedProduct(null)} className={`absolute top-4 left-4 w-8 h-8 ${T.overlay} flex items-center justify-center text-white border ${T.mutedBorder} ${R.sm}`}>×</button>
               </div>

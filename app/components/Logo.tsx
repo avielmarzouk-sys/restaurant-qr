@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 type LogoProps = {
   size?: number
   showWordmark?: boolean
@@ -12,7 +14,7 @@ type LogoProps = {
 export default function Logo({ size = 32, showWordmark = true, className = '', textClassName = '' }: LogoProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <img src="/logo.png" alt="Click2Eat" width={size} height={size} className="flex-shrink-0 rounded-lg" />
+      <Image src="/logo.png" alt="Click2Eat" width={size} height={size} className="flex-shrink-0 rounded-lg" />
       {showWordmark && (
         <span className={`font-bold tracking-tight ${textClassName}`}>
           Click<span className="text-orange-500">2</span>Eat
